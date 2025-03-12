@@ -23,22 +23,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        try {
-            String response = authService.registerUser(registerRequest);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
+        String response = authService.registerUser(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-        try {
-            JwtResponse jwtResponse = authService.authenticateUser(loginRequest);
-            return ResponseEntity.ok(jwtResponse);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest request) {
+        JwtResponse jwtResponse = authService.authenticateUser(request);
+        return ResponseEntity.ok(jwtResponse);
     }
 }

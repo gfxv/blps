@@ -2,6 +2,8 @@ package dev.gfxv.blps.service;
 
 import dev.gfxv.blps.entity.Role;
 import dev.gfxv.blps.entity.User;
+import dev.gfxv.blps.exception.EmailAlreadyExistsException;
+import dev.gfxv.blps.exception.UsernameAlreadyExistsException;
 import dev.gfxv.blps.payload.request.LoginRequest;
 import dev.gfxv.blps.payload.request.RegisterRequest;
 import dev.gfxv.blps.payload.response.JwtResponse;
@@ -48,11 +50,11 @@ public class AuthService {
 
     public String registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new RuntimeException("Error: Username is already taken!");
+            throw new UsernameAlreadyExistsException("Username is already taken!");
         }
 
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Error: Email is already in use!");
+            throw new EmailAlreadyExistsException("Email is already in use!");
         }
 
         User user = new User();
