@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: blps-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: youtube
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: blps-minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"  # S3 API port
+      - "9001:9001"  # MinIO Console port
+    command: server /data --console-address ":9001"
+    restart: always
+
+volumes:
+  postgres_data:
+  minio_data:
