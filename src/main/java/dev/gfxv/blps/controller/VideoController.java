@@ -26,15 +26,29 @@ public class VideoController {
         this.videoService = videoService;
     }
 
+    @GetMapping("/public")
+    public ResponseEntity<List<VideoResponse>> getPublicVideos() {
+        List<VideoResponse> videos = videoService.getPublicVideos();
+        return ResponseEntity.ok(videos);
+    }
+
+    @GetMapping("/channels/{channelId}")
+    public ResponseEntity<List<VideoResponse>> getChannelVideos(
+            @PathVariable Long channelId,
+            Authentication authentication
+    ) {
+        String username = getUsernameFromAuthentication(authentication);
+        List<VideoResponse> videos = videoService.getChannelVideos(channelId, username);
+        return ResponseEntity.ok(videos);
+    }
+
     @PostMapping
     public ResponseEntity<?> createVideo(
             @RequestPart MultipartFile file,
             @RequestPart CreateVideoRequest details,
             Authentication authentication
     ) {
-        System.out.printf("Received: %s of %s \n", file.getOriginalFilename(), file.getContentType());
         String username = getUsernameFromAuthentication(authentication);
-        System.out.println("Username: " + username);
         VideoResponse response = videoService.createVideo(file, details, username);
         return ResponseEntity.ok(response);
     }
@@ -42,6 +56,6 @@ public class VideoController {
 
 
     private String getUsernameFromAuthentication(Authentication authentication) {
-        return authentication.getName();
+        return authentication == null ? "" : authentication.getName();
     }
 }
