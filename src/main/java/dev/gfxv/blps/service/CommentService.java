@@ -2,7 +2,10 @@ package dev.gfxv.blps.service;
 
 import dev.gfxv.blps.entity.Comment;
 import dev.gfxv.blps.entity.CommentStatus;
+import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.repository.CommentRepository;
+import dev.gfxv.blps.repository.UserRepository;
+import dev.gfxv.blps.security.JwtUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,21 +22,31 @@ public class CommentService {
     private CommentRepository commentRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private NotificationService notificationService;
-    public Comment addComment(Comment comment) {
+    @Autowired
+    private JwtUtils jwtUtil;
+
+    public Comment addComment(String token, Comment comment) {
+        String username = jwtUtil.getUsernameFromJwtToken(token);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+
+        comment.setUserId(user.getId());
         comment.setStatus(CommentStatus.PENDING);
         comment = commentRepository.save(comment);
 
         if (containsStopWords(comment.getText())) {
             commentRepository.delete(comment);
-            notificationService.notifyUser(comment.getUserId(), "Ваш комментарий был удален из-за нарушения правил.");
+            notificationService.notifyUser(user.getId(), "Ваш комментарий был удален из-за нарушения правил.");
             throw new IllegalArgumentException("Комментарий содержит запрещенные слова и был удален.");
         }
 
-        notificationService.notifyUser(comment.getUserId(), "Ваш комментарий успешно сохранен и ожидает модерации.");
+        notificationService.notifyUser(user.getId(), "Ваш комментарий успешно сохранен.");
         return comment;
     }
-
 
 
     public List<Comment> getPendingComments() {
