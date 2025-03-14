@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -31,7 +32,7 @@ public class VideoService {
     StorageService storageService;
 
     @Autowired
-    public VideoService (
+    public VideoService(
             VideoRepository videoRepository,
             UserRepository userRepository,
             AdminAssignmentRepository adminAssignmentRepository,
@@ -42,6 +43,45 @@ public class VideoService {
         this.storageService = storageService;
     }
 
+    public List<VideoResponse> getPublicVideos() {
+        List<Video> publicVideos = videoRepository.findByVisibilityTrue();
+        return publicVideos.stream()
+                .map(VideoResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<VideoResponse> getChannelVideos(Long channelId, String username) {
+        User channelOwner = userRepository.findById(channelId)
+                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
+
+        if (username.isEmpty()) {
+            return getChannelPublicVideos(channelId);
+        }
+
+        User currentUser = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // check if owner or channel admin
+        if (canManageVideo(currentUser.getId(), channelId, channelOwner.getId())) {
+            // return all videos (public and hidden) for the channel
+            List<Video> allChannelVideos = videoRepository.findByOwnerId(channelId);
+            return allChannelVideos.stream()
+                    .map(VideoResponse::new)
+                    .collect(Collectors.toList());
+        }
+
+        return getChannelPublicVideos(channelId);
+    }
+
+    private List<VideoResponse> getChannelPublicVideos(Long channelId) {
+        List<Video> publicChannelVideos = videoRepository.findByOwnerIdAndVisibilityTrue(channelId);
+        return publicChannelVideos.stream()
+                .map(VideoResponse::new)
+                .collect(Collectors.toList());
+    }
+
+
     @Transactional
     public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) {
         try {
@@ -50,9 +90,6 @@ public class VideoService {
                     file.getInputStream(),
                     file.getContentType()
             );
-
-            System.out.println("Object Name: " + objectName);
-
             Video video = new Video();
             video.setTitle(request.getTitle());
             video.setDescription(request.getDescription());
@@ -63,15 +100,35 @@ public class VideoService {
             video.setMinioKey(objectName);
             video.setVisibility(request.isVisibility());
             videoRepository.save(video);
-
-            System.out.println("Vide saved to database");
-
             return new VideoResponse(video);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create video: " + e.getMessage());
         }
     }
 
+    private boolean canManageVideo(Long userId, Video video) {
+        // check if the user is the video owner
+        if (video.getOwner().getId().equals(userId)) {
+            return true;
+        }
+
+        // check if the user is an admin for the video owner's channel
+        List<AdminAssignment> assignments = adminAssignmentRepository.findByAdminId(userId);
+        for (AdminAssignment assignment : assignments) {
+            if (assignment.getChannel().getId().equals(video.getOwner().getId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean canManageVideo(Long userId, Long channelId, Long channelOwnerId) {
+        return channelOwnerId.equals(userId) ||
+                adminAssignmentRepository.findByAdminId(userId)
+                        .stream()
+                        .anyMatch(assignment -> assignment.getChannel().getId().equals(channelId));
+    }
 
 
 }
