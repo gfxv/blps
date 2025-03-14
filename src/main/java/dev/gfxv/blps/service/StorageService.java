@@ -40,9 +40,6 @@ public class StorageService {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
-
-            System.out.println("maan i love java");
-
             String objectName = UUID.randomUUID() + "-" + fileName;
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -52,9 +49,6 @@ public class StorageService {
                             .contentType(contentType)
                             .build()
             );
-
-            System.out.println("maan i love java x2");
-
             return objectName;
         } catch (Exception e) {
             System.out.println("maan i hate java <3");

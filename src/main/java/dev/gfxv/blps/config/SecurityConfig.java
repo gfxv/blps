@@ -2,7 +2,6 @@ package dev.gfxv.blps.config;
 
 import dev.gfxv.blps.security.JwtAuthenticationFilter;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
