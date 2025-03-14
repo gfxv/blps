@@ -14,7 +14,6 @@ public class BlpsApplication {
 		SpringApplication.run(BlpsApplication.class, args);
 	}
 
-
 	@Bean
 	CommandLineRunner initRoles(RoleRepository roleRepository) {
 		return args -> {
