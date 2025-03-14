@@ -134,6 +134,51 @@ public class VideoService {
         return new VideoResponse(video);
     }
 
+    @Transactional
+    public void deleteVideo(Long videoId, String username) {
+        Video video = videoRepository
+                .findById(videoId)
+                .orElseThrow(() -> new VideoNotFoundException("Video not found"));
+
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
+
+        if (!canManageVideo(user.getId(), video)) {
+            throw new AccessDeniedException("You do not have permission to manage this video");
+        }
+
+        try {
+            storageService.deleteVideo(video.getMinioKey());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        videoRepository.delete(video);
+    }
+
+    public void assignAdminToChannel(Long channelId, Long adminId, String currentUsername) {
+        User channel = userRepository
+                .findById(channelId)
+                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
+        User admin = userRepository
+                .findById(adminId)
+                .orElseThrow(() -> new UserNotFoundException("Admin not found"));
+        User currentUser = userRepository
+                .findByUsername(currentUsername)
+                .orElseThrow(() -> new UserNotFoundException("User " + currentUsername + " not found"));
+
+        // only the channel owner can assign admins
+        if (!channel.getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Only the channel owner can assign admins");
+        }
+
+        AdminAssignment assignment = new AdminAssignment();
+        assignment.setAdmin(admin);
+        assignment.setChannel(channel);
+        adminAssignmentRepository.save(assignment);
+    }
+
     private boolean canManageVideo(Long userId, Video video) {
         // check if the user is the video owner
         if (video.getOwner().getId().equals(userId)) {

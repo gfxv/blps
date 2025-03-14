@@ -64,6 +64,15 @@ public class VideoController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVideo(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String username = getUsernameFromAuthentication(authentication);
+        videoService.deleteVideo(id, username);
+        return ResponseEntity.noContent().build();
+    }
 
 
     private String getUsernameFromAuthentication(Authentication authentication) {
