@@ -74,6 +74,16 @@ public class VideoController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/channels/{channelId}/assign-admin")
+    public ResponseEntity<Void> assignAdminToChannel(
+            @PathVariable Long channelId,
+            @RequestParam Long adminId,
+            Authentication authentication
+    ) {
+        String currentUsername = getUsernameFromAuthentication(authentication);
+        videoService.assignAdminToChannel(channelId, adminId, currentUsername);
+        return ResponseEntity.ok().build();
+    }
 
     private String getUsernameFromAuthentication(Authentication authentication) {
         return authentication == null ? "" : authentication.getName();
