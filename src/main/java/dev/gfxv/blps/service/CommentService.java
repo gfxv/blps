@@ -25,7 +25,6 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
-
     @Autowired
     private NotificationService notificationService;
 
@@ -66,12 +65,22 @@ public class CommentService {
         return commentRepository.findByVideo(video);
     }
 
-    public Comment approveComment(Long id) {
+    public Comment approveComment(Long id, String token) {
+        List<String> roles = jwtUtil.getRolesFromJwtToken(token);
+        if (!roles.contains("ROLE_MODERATOR")){
+            System.out.println(roles.get(0));
+            throw new SecurityException("У пользователя нет прав для выполнения этой операции");
+        }
         return updateCommentStatus(id, CommentStatus.APPROVED);
     }
 
-    public Comment rejectComment(Long id) {
-        return updateCommentStatus(id, CommentStatus.REJECTED);
+    public void rejectComment(Long id, String token) {
+        List<String> roles = jwtUtil.getRolesFromJwtToken(token);
+        if (!roles.contains("ROLE_MODERATOR")){
+            throw new SecurityException("У пользователя нет прав для выполнения этой операции");
+        }
+        //return updateCommentStatus(id, CommentStatus.REJECTED);
+        commentRepository.deleteById(id);
     }
 
     private Comment updateCommentStatus(Long id, CommentStatus status) {

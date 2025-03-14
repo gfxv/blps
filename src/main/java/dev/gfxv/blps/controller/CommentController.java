@@ -35,13 +35,15 @@ public class CommentController {
     }
 
     @PostMapping("/approve/{id}")
-    public ResponseEntity<Comment> approveComment(@PathVariable Long id) {
-        return ResponseEntity.ok(commentService.approveComment(id));
+    public ResponseEntity<Comment> approveComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+
+        return ResponseEntity.ok(commentService.approveComment(id, token));
     }
 
     @PostMapping("/reject/{id}")
-    public ResponseEntity<Comment> rejectComment(@PathVariable Long id) {
-        return ResponseEntity.ok(commentService.rejectComment(id));
+    public ResponseEntity<Comment> rejectComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        commentService.rejectComment(id, token);
+        return ResponseEntity.noContent().build();
     }
 }
 
