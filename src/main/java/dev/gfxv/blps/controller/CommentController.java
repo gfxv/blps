@@ -14,12 +14,12 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @PostMapping("/add/{video_id}")
-    public ResponseEntity<Comment> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token, Long video_id) {
+    @PostMapping("/add/{videoId}")
+    public ResponseEntity<Comment> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token, @PathVariable Long videoId) {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        return ResponseEntity.ok(commentService.addComment(token,comment,video_id));
+        return ResponseEntity.ok(commentService.addComment(token, comment, videoId));
     }
 
 
@@ -27,6 +27,11 @@ public class CommentController {
     public ResponseEntity<List<Comment>> getPendingComments() {
 
         return ResponseEntity.ok(commentService.getPendingComments());
+    }
+
+    @GetMapping("/{videoId}")
+    public ResponseEntity<List<Comment>> getVideoComments(@PathVariable Long videoId) {
+        return ResponseEntity.ok(commentService.getVideoComments(videoId));
     }
 
     @PostMapping("/approve/{id}")

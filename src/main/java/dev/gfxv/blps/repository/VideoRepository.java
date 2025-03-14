@@ -15,4 +15,6 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
 
     // get public videos for a specific owner
     List<Video> findByOwnerIdAndVisibilityTrue(Long ownerId);
+
+    Video findVideoById(Long id);
 }

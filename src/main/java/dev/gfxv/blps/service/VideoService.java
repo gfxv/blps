@@ -81,6 +81,10 @@ public class VideoService {
                 .collect(Collectors.toList());
     }
 
+    public Video getVideoById(Long videoId){
+        return videoRepository.findVideoById(videoId);
+    }
+
 
     @Transactional
     public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) {

@@ -25,17 +25,24 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
+
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private VideoService videoService;
+
     @Autowired
     private JwtUtils jwtUtil;
 
-    public Comment addComment(String token, Comment comment, Long video_id) {
+    public Comment addComment(String token, Comment comment, Long videoId) {
         String username = jwtUtil.getUsernameFromJwtToken(token);
+        Video video = videoService.getVideoById(videoId);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
         comment.setUserId(user.getId());
+        comment.setVideo(video);
         comment.setStatus(CommentStatus.PENDING);
         comment = commentRepository.save(comment);
 
@@ -52,6 +59,11 @@ public class CommentService {
 
     public List<Comment> getPendingComments() {
         return commentRepository.findByStatus(CommentStatus.PENDING);
+    }
+
+    public List<Comment> getVideoComments(Long videoId){
+        Video video = videoService.getVideoById(videoId);
+        return commentRepository.findByVideo(video);
     }
 
     public Comment approveComment(Long id) {
