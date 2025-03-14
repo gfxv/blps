@@ -106,6 +106,34 @@ public class VideoService {
         }
     }
 
+    @Transactional
+    public VideoResponse updateVideo(Long videoId, UpdateVideoRequest updateDto, String username) {
+        Video video = videoRepository
+                .findById(videoId)
+                .orElseThrow(() -> new VideoNotFoundException("Video not found"));
+
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
+
+        if (!canManageVideo(user.getId(), video)) {
+            throw new AccessDeniedException("You do not have permission to manage this video");
+        }
+
+        if (updateDto.getTitle() != null) {
+            video.setTitle(updateDto.getTitle());
+        }
+        if (updateDto.getDescription() != null) {
+            video.setDescription(updateDto.getDescription());
+        }
+        if (updateDto.getVisibility() != null) {
+            video.setVisibility(updateDto.getVisibility());
+        }
+
+        videoRepository.save(video);
+        return new VideoResponse(video);
+    }
+
     private boolean canManageVideo(Long userId, Video video) {
         // check if the user is the video owner
         if (video.getOwner().getId().equals(userId)) {

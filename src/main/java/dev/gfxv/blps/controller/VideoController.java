@@ -53,6 +53,17 @@ public class VideoController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<VideoResponse> updateVideo(
+            @PathVariable Long id,
+            @RequestBody UpdateVideoRequest request,
+            Authentication authentication
+    ) {
+        String username = getUsernameFromAuthentication(authentication);
+        VideoResponse response = videoService.updateVideo(id, request, username);
+        return ResponseEntity.ok(response);
+    }
+
 
 
     private String getUsernameFromAuthentication(Authentication authentication) {
