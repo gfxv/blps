@@ -3,6 +3,7 @@ package dev.gfxv.blps.service;
 import dev.gfxv.blps.entity.Comment;
 import dev.gfxv.blps.entity.CommentStatus;
 import dev.gfxv.blps.entity.User;
+import dev.gfxv.blps.entity.Video;
 import dev.gfxv.blps.repository.CommentRepository;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.security.JwtUtils;
@@ -29,7 +30,7 @@ public class CommentService {
     @Autowired
     private JwtUtils jwtUtil;
 
-    public Comment addComment(String token, Comment comment) {
+    public Comment addComment(String token, Comment comment, Long video_id) {
         String username = jwtUtil.getUsernameFromJwtToken(token);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));

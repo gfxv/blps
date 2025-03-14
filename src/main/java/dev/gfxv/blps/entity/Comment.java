@@ -20,6 +20,10 @@ public class Comment {
     @Column(nullable = false)
     private Long userId;
 
+    @ManyToOne
+    @JoinColumn(name="video_id")
+    private Video video;
+
     @Enumerated(EnumType.STRING)
     private CommentStatus status;
 

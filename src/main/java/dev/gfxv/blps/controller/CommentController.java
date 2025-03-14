@@ -14,17 +14,18 @@ public class CommentController {
     @Autowired
     private CommentService commentService;
 
-    @PostMapping("/add")
-    public ResponseEntity<Comment> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token) {
+    @PostMapping("/add/{video_id}")
+    public ResponseEntity<Comment> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token, Long video_id) {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        return ResponseEntity.ok(commentService.addComment(token,comment));
+        return ResponseEntity.ok(commentService.addComment(token,comment,video_id));
     }
 
 
     @GetMapping("/pending")
     public ResponseEntity<List<Comment>> getPendingComments() {
+
         return ResponseEntity.ok(commentService.getPendingComments());
     }
 
