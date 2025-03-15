@@ -45,7 +45,10 @@ public class User {
     Set<User> subscribers = new HashSet<>();
 
     @Column(name = "total_views", nullable = false)
-    private Long totalViews = 0L; // Default to 0
+    private Long totalViews = 0L; // default to 0
+
+    @Column(name = "is_monetized", nullable = false)
+    private boolean isMonetized = false;
 
     public Long getId() {
         return id;
@@ -109,6 +112,14 @@ public class User {
 
     public void setTotalViews(Long totalViews) {
         this.totalViews = totalViews;
+    }
+
+    public boolean isMonetized() {
+        return isMonetized;
+    }
+
+    public void setMonetized(boolean monetized) {
+        this.isMonetized = monetized;
     }
 
 }

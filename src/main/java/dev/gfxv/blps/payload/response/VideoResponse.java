@@ -3,6 +3,7 @@ package dev.gfxv.blps.payload.response;
 import dev.gfxv.blps.entity.Video;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +19,8 @@ public class VideoResponse {
     LocalDateTime updatedAt;
     Long views;
 
+    @NonFinal
+    String streamUrl;
 
     public VideoResponse(Video video) {
         this.id = video.getId();
@@ -58,6 +61,13 @@ public class VideoResponse {
         return updatedAt;
     }
 
+    public String getStreamUrl() {
+        return streamUrl;
+    }
+
+    public void setStreamUrl(String url) {
+        this.streamUrl = url;
+    }
 
     public Long getViews() {
         return views;
