@@ -20,4 +20,6 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
 
     @Query("SELECT v FROM Video v WHERE v.owner.id = :ownerId AND v.visibility = true AND v.createdAt > :date")
     List<Video> findByOwnerIdAndVisibilityTrueAndCreatedAtAfter(Long ownerId, LocalDateTime date);
+
+    Video findVideoById(Long id);
 }
