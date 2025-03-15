@@ -1,13 +1,13 @@
 package dev.gfxv.blps.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "comments")
 public class Comment {
@@ -26,10 +26,6 @@ public class Comment {
 
     @Enumerated(EnumType.STRING)
     private CommentStatus status;
-
-    public void setStatus(CommentStatus status){
-        this.status = status;
-    }
 
     private LocalDateTime createdAt = LocalDateTime.now();
 

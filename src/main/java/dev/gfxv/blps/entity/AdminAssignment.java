@@ -1,7 +1,9 @@
 package dev.gfxv.blps.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "admin_assignments")
 public class AdminAssignment {
@@ -16,28 +18,4 @@ public class AdminAssignment {
     @ManyToOne
     @JoinColumn(name = "channel_id")
     private User channel;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getAdmin() {
-        return admin;
-    }
-
-    public void setAdmin(User admin) {
-        this.admin = admin;
-    }
-
-    public User getChannel() {
-        return channel;
-    }
-
-    public void setChannel(User channel) {
-        this.channel = channel;
-    }
 }

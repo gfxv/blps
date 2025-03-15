@@ -2,25 +2,24 @@ package dev.gfxv.blps.payload.response;
 
 import dev.gfxv.blps.entity.Video;
 import lombok.AccessLevel;
+import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 
 import java.time.LocalDateTime;
 
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Data
 public class VideoResponse {
 
-    Long id;
-    String title;
-    String description;
-    Long ownerId;
-    boolean visibility;
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
-    Long views;
-
-    @NonFinal
-    String streamUrl;
+    private Long id;
+    private String title;
+    private String description;
+    private Long ownerId;
+    private boolean visibility;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Long views;
+    private String streamUrl;
 
     public VideoResponse(Video video) {
         this.id = video.getId();
@@ -32,45 +31,4 @@ public class VideoResponse {
         this.updatedAt = video.getUpdatedAt();
         this.views = video.getViewCount();
     }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Long getOwnerId() {
-        return ownerId;
-    }
-
-    public boolean isVisibility() {
-        return visibility;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public String getStreamUrl() {
-        return streamUrl;
-    }
-
-    public void setStreamUrl(String url) {
-        this.streamUrl = url;
-    }
-
-    public Long getViews() {
-        return views;
-    }
-
 }
