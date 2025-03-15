@@ -58,19 +58,17 @@ public class VideoService {
         VideoResponse videoResponse = new VideoResponse(video);
         videoResponse.setStreamUrl("/videos/" + video.getId() + "/stream");
         if (video.isVisibility()) {
+            updateVideoStatistics(video);
             return videoResponse;
         }
-
-        // TODO: vvv
-        // update stats somewhere here...
 
         User user = userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
         if (canManageVideo(user.getId(), video)) {
+            updateVideoStatistics(video);
             return videoResponse;
         }
-
         throw new VideoNotFoundException("No such video");
     }
 
@@ -248,6 +246,8 @@ public class VideoService {
                 .collect(Collectors.toList());
     }
 
+    /* ADMIN ASSIGNMENT LOGIC */
+
     public void assignAdminToChannel(Long channelId, Long adminId, String currentUsername) {
         User channel = userRepository
                 .findById(channelId)
@@ -271,6 +271,19 @@ public class VideoService {
     }
 
     /* HELPER FUNCTIONS */
+
+    private void updateVideoStatistics(Video video) {
+        System.out.println("trying to update stats");
+
+        video.setViewCount(video.getViewCount() + 1);
+        videoRepository.save(video);
+
+        User owner = video.getOwner();
+        owner.setTotalViews(owner.getTotalViews() + 1);
+        userRepository.save(owner);
+
+        System.out.println("stats updated");
+    }
 
     private boolean canManageVideo(Long userId, Video video) {
         if (userId == null) return false; // No authenticated user

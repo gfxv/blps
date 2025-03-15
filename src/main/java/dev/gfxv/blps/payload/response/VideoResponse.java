@@ -16,6 +16,8 @@ public class VideoResponse {
     boolean visibility;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+    Long views;
+
 
     public VideoResponse(Video video) {
         this.id = video.getId();
@@ -25,6 +27,7 @@ public class VideoResponse {
         this.visibility = video.isVisibility();
         this.createdAt = video.getCreatedAt();
         this.updatedAt = video.getUpdatedAt();
+        this.views = video.getViewCount();
     }
 
     public Long getId() {
@@ -53,6 +56,11 @@ public class VideoResponse {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+
+    public Long getViews() {
+        return views;
     }
 
 }

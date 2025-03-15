@@ -30,6 +30,9 @@ public class Video {
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount = 0L;
+
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
@@ -104,5 +107,13 @@ public class Video {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getViewCount() {
+        return viewCount;
+    }
+
+    public void setViewCount(Long viewCount) {
+        this.viewCount = viewCount;
     }
 }

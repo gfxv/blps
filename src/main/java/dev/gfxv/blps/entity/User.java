@@ -44,6 +44,9 @@ public class User {
     @ManyToMany(mappedBy = "subscriptions")
     Set<User> subscribers = new HashSet<>();
 
+    @Column(name = "total_views", nullable = false)
+    private Long totalViews = 0L; // Default to 0
+
     public Long getId() {
         return id;
     }
@@ -98,6 +101,14 @@ public class User {
 
     public void setSubscribers(Set<User> subscribers) {
         this.subscribers = subscribers;
+    }
+
+    public Long getTotalViews() {
+        return totalViews;
+    }
+
+    public void setTotalViews(Long totalViews) {
+        this.totalViews = totalViews;
     }
 
 }
