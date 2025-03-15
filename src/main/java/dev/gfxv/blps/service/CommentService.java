@@ -67,6 +67,7 @@ public class CommentService {
 
     public Comment approveComment(Long id, String token) {
         List<String> roles = jwtUtil.getRolesFromJwtToken(token);
+        System.out.println("Полученный токен: " + token);
         if (!roles.contains("ROLE_MODERATOR")){
             System.out.println(roles.get(0));
             throw new SecurityException("У пользователя нет прав для выполнения этой операции");

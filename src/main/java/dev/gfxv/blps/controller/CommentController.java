@@ -3,6 +3,7 @@ package dev.gfxv.blps.controller;
 import dev.gfxv.blps.entity.Comment;
 import dev.gfxv.blps.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,17 +16,21 @@ public class CommentController {
     private CommentService commentService;
 
     @PostMapping("/add/{videoId}")
-    public ResponseEntity<Comment> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token, @PathVariable Long videoId) {
+    public ResponseEntity<String> addComment(@RequestBody Comment comment, @RequestHeader("Authorization") String token, @PathVariable Long videoId) {
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        return ResponseEntity.ok(commentService.addComment(token, comment, videoId));
+        try {
+            commentService.addComment(token, comment, videoId);
+            return ResponseEntity.ok("Комментарий успешно добавлен");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 
     @GetMapping("/pending")
     public ResponseEntity<List<Comment>> getPendingComments() {
-
         return ResponseEntity.ok(commentService.getPendingComments());
     }
 
@@ -35,15 +40,29 @@ public class CommentController {
     }
 
     @PostMapping("/approve/{id}")
-    public ResponseEntity<Comment> approveComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-
-        return ResponseEntity.ok(commentService.approveComment(id, token));
+    public ResponseEntity<String> approveComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        try{
+            commentService.approveComment(id, token);
+            return ResponseEntity.ok("Комментарий успешно одобрен");
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PostMapping("/reject/{id}")
-    public ResponseEntity<Comment> rejectComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        commentService.rejectComment(id, token);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> rejectComment(@PathVariable Long id, @RequestHeader("Authorization") String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        try{
+            commentService.rejectComment(id, token);
+            return ResponseEntity.ok("Комментарий успешно удален");
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 }
 
