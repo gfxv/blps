@@ -43,6 +43,27 @@ public class VideoService {
         this.storageService = storageService;
     }
 
+    public VideoResponse getVideoById(Long id, String username) {
+        Video video = videoRepository
+                .findById(id)
+                .orElseThrow(() -> new VideoNotFoundException("No such video"));
+
+        if (video.isVisibility()) {
+            return new VideoResponse(video);
+        }
+
+        // update stats somewhere here...
+
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
+        if (canManageVideo(user.getId(), video)) {
+            return new VideoResponse(video);
+        }
+
+        throw new VideoNotFoundException("No such video");
+    }
+
     public List<VideoResponse> getPublicVideos() {
         List<Video> publicVideos = videoRepository.findByVisibilityTrue();
         return publicVideos.stream()
@@ -60,7 +81,7 @@ public class VideoService {
 
         User currentUser = userRepository
                 .findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
 
         // check if owner or channel admin
         if (canManageVideo(currentUser.getId(), channelId, channelOwner.getId())) {
@@ -180,19 +201,20 @@ public class VideoService {
     }
 
     private boolean canManageVideo(Long userId, Video video) {
-        // check if the user is the video owner
+        if (userId == null) return false; // No authenticated user
+
+        // Owner can view their own video
         if (video.getOwner().getId().equals(userId)) {
             return true;
         }
 
-        // check if the user is an admin for the video owner's channel
+        // Admins of the channel can view
         List<AdminAssignment> assignments = adminAssignmentRepository.findByAdminId(userId);
         for (AdminAssignment assignment : assignments) {
             if (assignment.getChannel().getId().equals(video.getOwner().getId())) {
                 return true;
             }
         }
-
         return false;
     }
 

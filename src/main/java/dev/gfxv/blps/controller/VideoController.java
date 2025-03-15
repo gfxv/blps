@@ -26,6 +26,16 @@ public class VideoController {
         this.videoService = videoService;
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<VideoResponse> getVideo(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String username = getUsernameFromAuthentication(authentication);
+        VideoResponse video = videoService.getVideoById(id, username);
+        return ResponseEntity.ok(video);
+    }
+
     @GetMapping("/public")
     public ResponseEntity<List<VideoResponse>> getPublicVideos() {
         List<VideoResponse> videos = videoService.getPublicVideos();
