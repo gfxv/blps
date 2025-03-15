@@ -42,15 +42,7 @@ public class VideoController {
         return ResponseEntity.ok(videos);
     }
 
-    @GetMapping("/channels/{channelId}")
-    public ResponseEntity<List<VideoResponse>> getChannelVideos(
-            @PathVariable Long channelId,
-            Authentication authentication
-    ) {
-        String username = getUsernameFromAuthentication(authentication);
-        List<VideoResponse> videos = videoService.getChannelVideos(channelId, username);
-        return ResponseEntity.ok(videos);
-    }
+
 
     @PostMapping
     public ResponseEntity<?> createVideo(
@@ -84,15 +76,6 @@ public class VideoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/channels/{channelId}/assign-admin")
-    public ResponseEntity<Void> assignAdminToChannel(
-            @PathVariable Long channelId,
-            @RequestParam Long adminId,
-            Authentication authentication
-    ) {
-        String currentUsername = getUsernameFromAuthentication(authentication);
-        videoService.assignAdminToChannel(channelId, adminId, currentUsername);
-        return ResponseEntity.ok().build();
     }
 
     private String getUsernameFromAuthentication(Authentication authentication) {
