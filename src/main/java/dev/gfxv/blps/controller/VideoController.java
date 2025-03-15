@@ -4,6 +4,7 @@ import dev.gfxv.blps.payload.request.CreateVideoRequest;
 import dev.gfxv.blps.payload.request.UpdateVideoRequest;
 import dev.gfxv.blps.payload.response.VideoResponse;
 import dev.gfxv.blps.service.VideoService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +59,7 @@ public class VideoController {
     @PutMapping("/{id}")
     public ResponseEntity<VideoResponse> updateVideo(
             @PathVariable Long id,
-            @RequestBody UpdateVideoRequest request,
+            @Valid @RequestBody UpdateVideoRequest request,
             Authentication authentication
     ) {
         String username = getUsernameFromAuthentication(authentication);
@@ -74,8 +75,6 @@ public class VideoController {
         String username = getUsernameFromAuthentication(authentication);
         videoService.deleteVideo(id, username);
         return ResponseEntity.noContent().build();
-    }
-
     }
 
     private String getUsernameFromAuthentication(Authentication authentication) {

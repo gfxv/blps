@@ -4,6 +4,7 @@ import dev.gfxv.blps.payload.request.LoginRequest;
 import dev.gfxv.blps.payload.request.RegisterRequest;
 import dev.gfxv.blps.payload.response.JwtResponse;
 import dev.gfxv.blps.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +24,17 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
+    public ResponseEntity<?> registerUser(
+            @Valid @RequestBody RegisterRequest request
+    ) {
         String response = authService.registerUser(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> authenticateUser(
+            @Valid @RequestBody LoginRequest request
+    ) {
         JwtResponse jwtResponse = authService.authenticateUser(request);
         return ResponseEntity.ok(jwtResponse);
     }
