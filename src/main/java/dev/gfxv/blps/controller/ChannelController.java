@@ -34,6 +34,40 @@ public class ChannelController {
         return ResponseEntity.ok(videos);
     }
 
+    @PostMapping("/{channelId}/subscribe")
+    public ResponseEntity<Void> subscribeToChannel(
+            @PathVariable Long channelId,
+            Authentication authentication
+    ) {
+        String username = getUsernameFromAuthentication(authentication);
+        videoService.subscribeToChannel(channelId, username);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{channelId}/unsubscribe")
+    public ResponseEntity<Void> unsubscribeFromChannel(
+            @PathVariable Long channelId,
+            Authentication authentication) {
+        String username = getUsernameFromAuthentication(authentication);
+        videoService.unsubscribeFromChannel(channelId, username);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/subscriptions")
+    public ResponseEntity<List<UserInfoResponse>> getSubscriptions(Authentication authentication) {
+        String username = getUsernameFromAuthentication(authentication);
+        List<UserInfoResponse> subscriptions = videoService.getSubscriptions(username);
+        return ResponseEntity.ok(subscriptions);
+    }
+
+    @GetMapping("/{channelId}/subscribers")
+    public ResponseEntity<List<UserInfoResponse>> getSubscribers(
+            @PathVariable Long channelId
+    ) {
+        List<UserInfoResponse> subscribers = videoService.getSubscribers(channelId);
+        return ResponseEntity.ok(subscribers);
+    }
+
     @PostMapping("/{channelId}/assign-admin")
     public ResponseEntity<Void> assignAdminToChannel(
             @PathVariable Long channelId,

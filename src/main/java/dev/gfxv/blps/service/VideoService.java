@@ -7,6 +7,7 @@ import dev.gfxv.blps.exception.UserNotFoundException;
 import dev.gfxv.blps.exception.VideoNotFoundException;
 import dev.gfxv.blps.payload.request.CreateVideoRequest;
 import dev.gfxv.blps.payload.request.UpdateVideoRequest;
+import dev.gfxv.blps.payload.response.UserInfoResponse;
 import dev.gfxv.blps.payload.response.VideoResponse;
 import dev.gfxv.blps.repository.AdminAssignmentRepository;
 import dev.gfxv.blps.repository.UserRepository;
@@ -15,10 +16,16 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.ResourceRegion;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRange;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,19 +53,22 @@ public class VideoService {
     public VideoResponse getVideoById(Long id, String username) {
         Video video = videoRepository
                 .findById(id)
-                .orElseThrow(() -> new VideoNotFoundException("No such video"));
+                .orElseThrow(() -> new VideoNotFoundException("Video not found"));
 
+        VideoResponse videoResponse = new VideoResponse(video);
+        videoResponse.setStreamUrl("/videos/" + video.getId() + "/stream");
         if (video.isVisibility()) {
-            return new VideoResponse(video);
+            return videoResponse;
         }
 
+        // TODO: vvv
         // update stats somewhere here...
 
         User user = userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
         if (canManageVideo(user.getId(), video)) {
-            return new VideoResponse(video);
+            return videoResponse;
         }
 
         throw new VideoNotFoundException("No such video");
@@ -178,6 +188,66 @@ public class VideoService {
         videoRepository.delete(video);
     }
 
+
+    /* SUBSCRIPTION LOGIC */
+
+    @Transactional
+    public void subscribeToChannel(Long channelId, String username) {
+        User subscriber = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Subscriber not found"));
+
+        if (channelId.equals(subscriber.getId())) {
+            throw new IllegalArgumentException("Users cannot subscribe to themselves");
+        }
+
+        User channel = userRepository
+                .findById(channelId)
+                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
+
+        if (subscriber.getSubscriptions().contains(channel)) {
+            throw new IllegalStateException("User is already subscribed to this channel");
+        }
+
+        subscriber.getSubscriptions().add(channel);
+        userRepository.save(subscriber);
+    }
+
+    @Transactional
+    public void unsubscribeFromChannel(Long channelId, String username) {
+        User subscriber = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("Subscriber not found"));
+        User channel = userRepository
+                .findById(channelId)
+                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
+
+        if (!subscriber.getSubscriptions().contains(channel)) {
+            throw new IllegalStateException("User is not subscribed to this channel");
+        }
+
+        subscriber.getSubscriptions().remove(channel);
+        userRepository.save(subscriber);
+    }
+
+    public List<UserInfoResponse> getSubscriptions(String username) {
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return user.getSubscriptions().stream()
+                .map(UserInfoResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserInfoResponse> getSubscribers(Long channelId) {
+        User channel = userRepository
+                .findById(channelId)
+                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
+        return channel.getSubscribers().stream()
+                .map(UserInfoResponse::new)
+                .collect(Collectors.toList());
+    }
+
     public void assignAdminToChannel(Long channelId, Long adminId, String currentUsername) {
         User channel = userRepository
                 .findById(channelId)
@@ -199,6 +269,8 @@ public class VideoService {
         assignment.setChannel(channel);
         adminAssignmentRepository.save(assignment);
     }
+
+    /* HELPER FUNCTIONS */
 
     private boolean canManageVideo(Long userId, Video video) {
         if (userId == null) return false; // No authenticated user
