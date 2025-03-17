@@ -2,3 +2,7 @@
 
 ## Лабораторная работа №1
 ![task](./docs/lab1-task.png)
+
+## Лабораторная работа №2
+![task](./docs/lab2-task.png)
+
