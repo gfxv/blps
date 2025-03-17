@@ -1,5 +1,6 @@
 package dev.gfxv.blps.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -31,22 +32,16 @@ public class User {
     )
     private Set<Role> roles = new HashSet<>();
 
-
-    @ManyToMany
-    @JoinTable(
-            name = "subscriptions",
-            joinColumns = @JoinColumn(name = "subscriber_id"),
-            inverseJoinColumns = @JoinColumn(name = "channel_id")
-    )
-    private Set<User> subscriptions = new HashSet<>();
-
-    @ManyToMany(mappedBy = "subscriptions")
-    private Set<User> subscribers = new HashSet<>();
+    @Column(name = "subscribers")
+    private Long subscribers = 0L;
 
     @Column(name = "total_views", nullable = false)
     private Long totalViews = 0L; // default to 0
 
     @Column(name = "is_monetized", nullable = false)
     private boolean isMonetized = false;
+
+    @Column(name = "last_withdrawal_amount", nullable = false)
+    private Double lastWithdrawalAmount = 0.0;
 
 }

@@ -9,10 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
@@ -45,5 +42,14 @@ public class UserController {
 
     private String getUsernameFromAuthentication(Authentication authentication) {
         return authentication == null ? "" : authentication.getName();
+    }
+
+    @PostMapping("/me/withdraw")
+    public ResponseEntity<String> withdrawEarnings(
+            @RequestParam Double amount,
+            Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
+        monetizationService.withdrawEarnings(userId, amount);
+        return ResponseEntity.ok("Withdrawal processed successfully");
     }
 }

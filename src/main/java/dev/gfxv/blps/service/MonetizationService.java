@@ -82,6 +82,30 @@ public class MonetizationService {
         return new MonetizationStatsResponse(totalEarnings, earningsSinceLastWithdrawal);
     }
 
+    @Transactional
+    public void withdrawEarnings(Long userId, Double amount) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!user.isMonetized()) {
+            throw new IllegalStateException("User is not monetized");
+        }
+
+        double totalEarnings = user.getTotalViews() * monetizationRatio;
+        if (amount > totalEarnings - user.getLastWithdrawalAmount()) {
+            throw new IllegalArgumentException("Insufficient earnings for withdrawal");
+        }
+
+        Withdrawal withdrawal = new Withdrawal();
+        withdrawal.setUser(user);
+        withdrawal.setAmount(amount);
+        withdrawal.setWithdrawalDate(LocalDateTime.now());
+        withdrawalRepository.save(withdrawal);
+
+        user.setLastWithdrawalAmount(user.getLastWithdrawalAmount() + amount);
+        userRepository.save(user);
+    }
+
     public boolean isEligibleForMonetization(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -89,8 +113,7 @@ public class MonetizationService {
         // see: https://www.youtube.com/intl/en_us/creators/how-things-work/video-monetization/
 
         // check if the user has at least 500 subscribers
-        long subscriberCount = user.getSubscribers().size();
-        if (subscriberCount < minSubs) {
+        if (user.getSubscribers() < minSubs) {
             return false;
         }
 

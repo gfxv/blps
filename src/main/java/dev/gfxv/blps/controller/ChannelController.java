@@ -44,27 +44,11 @@ public class ChannelController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{channelId}/unsubscribe")
-    public ResponseEntity<Void> unsubscribeFromChannel(
-            @PathVariable Long channelId,
-            Authentication authentication) {
-        String username = getUsernameFromAuthentication(authentication);
-        videoService.unsubscribeFromChannel(channelId, username);
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/subscriptions")
-    public ResponseEntity<List<UserInfoResponse>> getSubscriptions(Authentication authentication) {
-        String username = getUsernameFromAuthentication(authentication);
-        List<UserInfoResponse> subscriptions = videoService.getSubscriptions(username);
-        return ResponseEntity.ok(subscriptions);
-    }
-
     @GetMapping("/{channelId}/subscribers")
-    public ResponseEntity<List<UserInfoResponse>> getSubscribers(
+    public ResponseEntity<?> getSubscribers(
             @PathVariable Long channelId
     ) {
-        List<UserInfoResponse> subscribers = videoService.getSubscribers(channelId);
+        Long subscribers = videoService.getSubscribers(channelId);
         return ResponseEntity.ok(subscribers);
     }
 

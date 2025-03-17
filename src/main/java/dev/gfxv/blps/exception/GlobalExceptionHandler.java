@@ -19,10 +19,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
         System.out.println("triggered handleRuntimeException");
-        System.out.println("AHTUNG AHTUNG:" + ex.getMessage());
+        System.out.println("AHTUNG AHTUNG: " + ex.getMessage());
         return ResponseEntity
                 .internalServerError()
                 .body("An unexpected error occurred");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGenericException(Exception ex) {
+        ex.printStackTrace(); // Log the stack trace
+        return new ResponseEntity<>("An unexpected error occurred: " + (ex.getMessage() != null ? ex.getMessage() : "Unknown error"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(BadCredentialsException.class)

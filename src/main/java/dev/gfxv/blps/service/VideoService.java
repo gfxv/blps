@@ -193,7 +193,6 @@ public class VideoService {
 
     /* SUBSCRIPTION LOGIC */
 
-    @Transactional
     public void subscribeToChannel(Long channelId, String username) {
         User subscriber = userRepository
                 .findByUsername(username)
@@ -206,48 +205,15 @@ public class VideoService {
         User channel = userRepository
                 .findById(channelId)
                 .orElseThrow(() -> new UserNotFoundException("Channel not found"));
-
-        if (subscriber.getSubscriptions().contains(channel)) {
-            throw new IllegalStateException("User is already subscribed to this channel");
-        }
-
-        subscriber.getSubscriptions().add(channel);
+        channel.setSubscribers(channel.getSubscribers() + 1);
         userRepository.save(subscriber);
     }
 
-    @Transactional
-    public void unsubscribeFromChannel(Long channelId, String username) {
-        User subscriber = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("Subscriber not found"));
+    public Long getSubscribers(Long channelId) {
         User channel = userRepository
                 .findById(channelId)
                 .orElseThrow(() -> new UserNotFoundException("Channel not found"));
-
-        if (!subscriber.getSubscriptions().contains(channel)) {
-            throw new IllegalStateException("User is not subscribed to this channel");
-        }
-
-        subscriber.getSubscriptions().remove(channel);
-        userRepository.save(subscriber);
-    }
-
-    public List<UserInfoResponse> getSubscriptions(String username) {
-        User user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-        return user.getSubscriptions().stream()
-                .map(UserInfoResponse::new)
-                .collect(Collectors.toList());
-    }
-
-    public List<UserInfoResponse> getSubscribers(Long channelId) {
-        User channel = userRepository
-                .findById(channelId)
-                .orElseThrow(() -> new UserNotFoundException("Channel not found"));
-        return channel.getSubscribers().stream()
-                .map(UserInfoResponse::new)
-                .collect(Collectors.toList());
+        return channel.getSubscribers();
     }
 
     /* ADMIN ASSIGNMENT LOGIC */
