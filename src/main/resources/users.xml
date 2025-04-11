@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <users>
-    <user username="admin"
-          password="admin"
-          roles="ROLE_ADMIN,ROLE_MODERATOR"/>
+    <user password="admin" roles="ROLE_ADMIN,ROLE_MODERATOR" username="admin"/>
+    <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" username="masha"/>
 </users>

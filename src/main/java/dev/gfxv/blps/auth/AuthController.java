@@ -5,6 +5,7 @@ import dev.gfxv.blps.model.XmlUsers;
 import dev.gfxv.blps.payload.request.LoginRequest;
 import dev.gfxv.blps.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,6 +37,9 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
+    @Value("${app.users-xml-path}")
+    private String usersXmlPath;
+
     @PostMapping("/login")
     public String login(@RequestBody LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -53,7 +57,10 @@ public class AuthController {
     public String register(@RequestBody UserRegistrationRequest request) throws Exception {
 
         JAXBContext context = JAXBContext.newInstance(XmlUsers.class);
-        File xmlFile = new ClassPathResource("users.xml").getFile();
+        //File xmlFile = new ClassPathResource("users.xml").getFile();
+
+        File xmlFile = new File(usersXmlPath);
+        System.out.println("Real file path: " + xmlFile.getAbsolutePath());
         XmlUsers xmlUsers = (XmlUsers) context.createUnmarshaller().unmarshal(xmlFile);
 
 
@@ -84,6 +91,9 @@ public class AuthController {
         Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         marshaller.marshal(xmlUsers, xmlFile);
+
+        System.out.println("File saved to: " + xmlFile.getAbsolutePath());
+        System.out.println("File size: " + xmlFile.length());
 
         System.out.println(xmlUsers.getUsers());
 
