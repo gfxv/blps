@@ -29,16 +29,15 @@ public class JwtUtils {
     @Value("${jwt.expiration}")
     private static long jwtExpiration;
 
-    public String generateToken(Authentication authentication) {
+    public String generateToken(String username, List<String> roles) {
         return Jwts.builder()
-                .setSubject(authentication.getName())
-                .claim("roles", authentication.getAuthorities())
+                .setSubject(username)
+                .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                 .signWith(SECRET_KEY)
                 .compact();
     }
-
     public String getUsernameFromJwtToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes()))

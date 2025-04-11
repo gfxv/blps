@@ -66,6 +66,10 @@ public class JaasLoginModule implements LoginModule {
             }
 
             this.authenticatedUsername = inputUsername;
+            String[] roles = user.getRoles().split(",");
+            for (String role : roles) {
+                principalsToAdd.add(new RolePrincipal(role.trim()));
+            }
             return true;
 
         } catch (Exception e) {
