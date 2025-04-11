@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <users>
     <user password="admin" roles="ROLE_ADMIN,ROLE_MODERATOR" username="admin"/>
-    <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" username="masha"/>
+    <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" roles="ROLE_USER" username="masha"/>
+    <user password="$2a$10$FjGvgyM9nl405TGM2aM7Lun0P.0skAJsCm0CL8xW/WNzAAfLcBP9m" roles="ROLE_USER" username="vasya"/>
+    <user password="$2a$10$b9uUnvKV1Ce9D/8JddB4duCS35DDkDH.nOgJvSsN.igH.CgcvV.Kq" roles="ROLE_USER" username="sonya"/>
 </users>
