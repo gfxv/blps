@@ -4,4 +4,5 @@
     <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" roles="ROLE_USER" username="masha"/>
     <user password="$2a$10$FjGvgyM9nl405TGM2aM7Lun0P.0skAJsCm0CL8xW/WNzAAfLcBP9m" roles="ROLE_USER" username="vasya"/>
     <user password="$2a$10$b9uUnvKV1Ce9D/8JddB4duCS35DDkDH.nOgJvSsN.igH.CgcvV.Kq" roles="ROLE_USER" username="sonya"/>
+    <user password="$2a$10$hazS3KTS2UvRdTXvO7DCXuoH3luSsO7658XlTA4T5nuKwlJrkPxJO" roles="ROLE_USER, ROLE_ADMIN" username="hello"/>
 </users>

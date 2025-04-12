@@ -1,10 +1,13 @@
 package dev.gfxv.blps.auth;
 
+import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.model.XmlUser;
 import dev.gfxv.blps.model.XmlUsers;
 import dev.gfxv.blps.payload.request.LoginRequest;
+import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,6 +40,12 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+
+    private final UserRepository userRepository;
+
+
+
+
 
     @Value("${app.users-xml-path}")
     private String usersXmlPath;
@@ -77,6 +86,10 @@ public class AuthController {
         if (existingUser.isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
+        User user = new User();
+        user.setUsername(request.username());
+        user.setPassword(request.password());
+        user.setEmail(request.email());
 
 
         XmlUser newUser = new XmlUser();
@@ -86,6 +99,7 @@ public class AuthController {
             request = new UserRegistrationRequest(
                     request.username(),
                     request.password(),
+                    request.email(),
                     List.of("ROLE_USER")
             );
         } else {
@@ -102,12 +116,16 @@ public class AuthController {
 
         System.out.println(xmlUsers.getUsers());
 
+
+
         return "User registered successfully";
     }
 
     public record UserRegistrationRequest(
             String username,
             String password,
+
+            String email,
             List<String> roles
     ) {}
 }

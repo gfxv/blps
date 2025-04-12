@@ -4,6 +4,7 @@ import dev.gfxv.blps.entity.Comment;
 import dev.gfxv.blps.entity.CommentStatus;
 import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.entity.Video;
+import dev.gfxv.blps.model.XmlUser;
 import dev.gfxv.blps.repository.CommentRepository;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.security.JwtUtils;
@@ -24,6 +25,9 @@ public class CommentService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private XmlUserService xmlUserService;
 
     @Autowired
     private NotificationService notificationService;
@@ -65,9 +69,11 @@ public class CommentService {
         return commentRepository.findByVideo(video);
     }
 
-    public Comment approveComment(Long id, String token) {
-        List<String> roles = jwtUtil.getRolesFromJwtToken(token);
-        System.out.println("Полученный токен: " + token);
+    public Comment approveComment(Long id, String username) {
+        List<String> roles = xmlUserService.getRolesByUsername(username);
+        if (roles.contains("ROLE_ADMIN")){
+
+        }
         if (!roles.contains("ROLE_MODERATOR")){
             System.out.println(roles.get(0));
             throw new SecurityException("У пользователя нет прав для выполнения этой операции");

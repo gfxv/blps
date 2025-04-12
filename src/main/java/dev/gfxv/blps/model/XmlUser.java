@@ -6,11 +6,18 @@ public class XmlUser {
     private String password;
     private String roles = "ROLE_USER";
 
+    private String email;
+
     @XmlAttribute
     public String getUsername() { return username; }
 
     @XmlAttribute
     public String getPassword() { return password; }
+
+    @XmlAttribute
+    public String getEmail(){
+        return email;
+    }
 
     @XmlAttribute
     public String getRoles() {
@@ -19,6 +26,10 @@ public class XmlUser {
 
     public void setRoles(String roles) {
         this.roles = roles != null ? roles : "";
+    }
+
+    public void setEmail(String email){
+        this.email = email;
     }
 
 
