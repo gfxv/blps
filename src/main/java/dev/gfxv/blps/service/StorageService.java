@@ -51,7 +51,6 @@ public class StorageService {
             );
             return objectName;
         } catch (Exception e) {
-            System.out.println("maan i hate java <3");
             throw new Exception("Failed to upload video to MinIO: " + e.getMessage(), e);
         }
     }

@@ -11,7 +11,6 @@ import dev.gfxv.blps.payload.response.VideoResponse;
 import dev.gfxv.blps.repository.AdminAssignmentRepository;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.repository.VideoRepository;
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,12 +116,14 @@ public class VideoService {
 
     public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) {
         return transactionTemplate.execute(status -> {
+            String objName = null;
             try {
                 String objectName = storageService.uploadVideo(
                         file.getOriginalFilename(),
                         file.getInputStream(),
                         file.getContentType()
                 );
+                objName = objectName;
                 Video video = new Video();
                 video.setTitle(request.getTitle());
                 video.setDescription(request.getDescription());
@@ -136,60 +137,80 @@ public class VideoService {
                 return new VideoResponse(video);
             } catch (Exception e) {
                 status.setRollbackOnly();
+                if (objName != null) {
+                    try {
+                        storageService.deleteVideo(objName);
+                    } catch (Exception deleteEx) {
+                        System.err.println("Compensating transaction failed for MinIO object " + objName + ": " + deleteEx.getMessage());
+                    }
+                }
                 throw new RuntimeException("Failed to create video: " + e.getMessage());
             }
         });
     }
 
-    @Transactional
     public VideoResponse updateVideo(Long videoId, UpdateVideoRequest updateDto, String username) {
-        Video video = videoRepository
-                .findById(videoId)
-                .orElseThrow(() -> new VideoNotFoundException("Video not found"));
+        return transactionTemplate.execute(status -> {
+            try {
+                Video video = videoRepository
+                        .findById(videoId)
+                        .orElseThrow(() -> new VideoNotFoundException("Video not found"));
 
-        User user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
+                User user = userRepository
+                        .findByUsername(username)
+                        .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
 
-        if (!canManageVideo(user.getId(), video)) {
-            throw new AccessDeniedException("You do not have permission to manage this video");
-        }
+                if (!canManageVideo(user.getId(), video)) {
+                    throw new AccessDeniedException("You do not have permission to manage this video");
+                }
 
-        if (updateDto.getTitle() != null) {
-            video.setTitle(updateDto.getTitle());
-        }
-        if (updateDto.getDescription() != null) {
-            video.setDescription(updateDto.getDescription());
-        }
-        if (updateDto.getVisibility() != null) {
-            video.setVisibility(updateDto.getVisibility());
-        }
+                if (updateDto.getTitle() != null) {
+                    video.setTitle(updateDto.getTitle());
+                }
+                if (updateDto.getDescription() != null) {
+                    video.setDescription(updateDto.getDescription());
+                }
+                if (updateDto.getVisibility() != null) {
+                    video.setVisibility(updateDto.getVisibility());
+                }
 
-        videoRepository.save(video);
-        return new VideoResponse(video);
+                videoRepository.save(video);
+                return new VideoResponse(video);
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Failed to update video with ID " + videoId + ": " + e.getMessage(), e);
+            }
+        });
     }
 
-    @Transactional
     public void deleteVideo(Long videoId, String username) {
-        Video video = videoRepository
-                .findById(videoId)
-                .orElseThrow(() -> new VideoNotFoundException("Video not found"));
+        String minioKey = transactionTemplate.execute(status -> {
+            try {
+                Video video = videoRepository
+                        .findById(videoId)
+                        .orElseThrow(() -> new VideoNotFoundException("Video not found"));
 
-        User user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
+                User user = userRepository
+                        .findByUsername(username)
+                        .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
 
-        if (!canManageVideo(user.getId(), video)) {
-            throw new AccessDeniedException("You do not have permission to manage this video");
-        }
+                if (!canManageVideo(user.getId(), video)) {
+                    throw new AccessDeniedException("You do not have permission to manage this video");
+                }
+
+                videoRepository.delete(video);
+                return video.getMinioKey();
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Failed to delete video with ID " + videoId + " from database: " + e.getMessage(), e);
+            }
+        });
 
         try {
-            storageService.deleteVideo(video.getMinioKey());
+            storageService.deleteVideo(minioKey);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            System.err.println("Failed to delete MinIO object for video ID " + videoId + ": " + e.getMessage());
         }
-
-        videoRepository.delete(video);
     }
 
 

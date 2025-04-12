@@ -13,6 +13,7 @@ import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,31 +37,41 @@ public class MonetizationService {
     VideoRepository videoRepository;
     UserRepository userRepository;
     WithdrawalRepository withdrawalRepository;
+    TransactionTemplate transactionTemplate;
 
     @Autowired
     public MonetizationService(
             VideoRepository videoRepository,
             UserRepository userRepository,
-            WithdrawalRepository withdrawalRepository
+            WithdrawalRepository withdrawalRepository,
+            TransactionTemplate transactionTemplate
     ) {
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
         this.withdrawalRepository = withdrawalRepository;
+        this.transactionTemplate = transactionTemplate;
     }
 
-    @Transactional
     public boolean requestMonetization(String username) {
-        User user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return transactionTemplate.execute(status -> {
+            try {
+                User user = userRepository
+                        .findByUsername(username)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (!isEligibleForMonetization(user.getId())) {
-            return false;
-        }
+                if (!isEligibleForMonetization(user.getId())) {
+                    return false;
+                }
 
-        user.setMonetized(true);
-        userRepository.save(user);
-        return true;
+                user.setMonetized(true);
+                userRepository.save(user);
+
+                return true;
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Failed to request monetization for user " + username + ": " + e.getMessage(), e);
+            }
+        });
     }
 
     public MonetizationStatsResponse getMonetizationStats(String username) {
@@ -82,28 +93,36 @@ public class MonetizationService {
         return new MonetizationStatsResponse(totalEarnings, earningsSinceLastWithdrawal);
     }
 
-    @Transactional
     public void withdrawEarnings(Long userId, Double amount) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        transactionTemplate.execute(status -> {
+            try {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        if (!user.isMonetized()) {
-            throw new IllegalStateException("User is not monetized");
-        }
+                if (!user.isMonetized()) {
+                    throw new IllegalStateException("User is not monetized");
+                }
 
-        double totalEarnings = user.getTotalViews() * monetizationRatio;
-        if (amount > totalEarnings - user.getLastWithdrawalAmount()) {
-            throw new IllegalArgumentException("Insufficient earnings for withdrawal");
-        }
+                double totalEarnings = user.getTotalViews() * monetizationRatio;
+                if (amount > totalEarnings - user.getLastWithdrawalAmount()) {
+                    throw new IllegalArgumentException("Insufficient earnings for withdrawal");
+                }
 
-        Withdrawal withdrawal = new Withdrawal();
-        withdrawal.setUser(user);
-        withdrawal.setAmount(amount);
-        withdrawal.setWithdrawalDate(LocalDateTime.now());
-        withdrawalRepository.save(withdrawal);
+                Withdrawal withdrawal = new Withdrawal();
+                withdrawal.setUser(user);
+                withdrawal.setAmount(amount);
+                withdrawal.setWithdrawalDate(LocalDateTime.now());
+                withdrawalRepository.save(withdrawal);
 
-        user.setLastWithdrawalAmount(user.getLastWithdrawalAmount() + amount);
-        userRepository.save(user);
+                user.setLastWithdrawalAmount(user.getLastWithdrawalAmount() + amount);
+                userRepository.save(user);
+
+                return null;
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Failed to process withdrawal for user ID " + userId + ": " + e.getMessage(), e);
+            }
+        });
     }
 
     public boolean isEligibleForMonetization(Long userId) {
