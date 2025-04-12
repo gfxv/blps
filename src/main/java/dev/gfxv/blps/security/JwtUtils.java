@@ -27,20 +27,20 @@ public class JwtUtils {
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     @Value("${jwt.expiration}")
-    private static long jwtExpiration;
+    private long jwtExpiration;
 
     public String generateToken(String username, List<String> roles) {
         return Jwts.builder()
                 .setSubject(username)
                 .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                .setExpiration(new Date((new Date()).getTime() + jwtExpiration))
                 .signWith(SECRET_KEY)
                 .compact();
     }
     public String getUsernameFromJwtToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .setSigningKey(SECRET_KEY)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -49,7 +49,7 @@ public class JwtUtils {
 
     public List<String> getRolesFromJwtToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .setSigningKey(SECRET_KEY)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -59,12 +59,12 @@ public class JwtUtils {
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                    .setSigningKey(SECRET_KEY)
                     .build()
                     .parseClaimsJws(authToken);
             return true;
         } catch (Exception e) {
-            // TODO: add error logging
+            System.out.println("failed to validate token: " + e.getMessage());
             return false;
         }
     }

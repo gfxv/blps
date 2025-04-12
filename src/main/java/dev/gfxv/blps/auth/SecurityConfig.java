@@ -64,7 +64,7 @@ public class SecurityConfig {
             AuthorityGranter authorityGranter,
             JaasAuthenticationCallbackHandler jaasNameCallbackHandler,
             JaasAuthenticationCallbackHandler jaasPasswordCallbackHandler
-    ) throws Exception {
+    ) {
         JaasAuthenticationProvider provider = new JaasAuthenticationProvider();
         provider.setAuthorityGranters(new AuthorityGranter[] { authorityGranter });
         provider.setCallbackHandlers(
