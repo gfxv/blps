@@ -46,7 +46,7 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getVideoComments(videoId));
     }
 
-    @PostMapping("/approve/ {id}")
+    @PostMapping("/approve/{id}")
     public ResponseEntity<String> approveComment(
             @PathVariable Long id,
             Authentication authentication

@@ -1,2 +1,8 @@
 target
 .idea
+
+.env
+.gitattributes
+todo.txt
+.mvn
+.DS_Store

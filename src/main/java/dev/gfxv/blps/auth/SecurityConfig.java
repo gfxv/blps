@@ -99,8 +99,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/videos/{}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/channels/{}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/comments/{}").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/comments/approve/**").hasAnyRole("ROLE_MODERATOR", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/comments/reject/**").hasAnyRole("ROLE_MODERATOR", "ROLE_ADMIN")
 
                         .anyRequest().authenticated()
                 )

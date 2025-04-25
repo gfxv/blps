@@ -28,6 +28,12 @@ public class BlpsApplication {
 				modRole.setName("ROLE_MODERATOR");
 				roleRepository.save(modRole);
 			}
+
+			if (roleRepository.findByName("ROLE_GLOBAL_MODERATOR").isEmpty()) {
+				Role modRole = new Role();
+				modRole.setName("ROLE_GLOBAL_MODERATOR");
+				roleRepository.save(modRole);
+			}
 		};
 	}
 }

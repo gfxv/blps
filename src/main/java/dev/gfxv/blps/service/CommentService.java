@@ -1,10 +1,7 @@
 package dev.gfxv.blps.service;
 
-import dev.gfxv.blps.entity.Comment;
-import dev.gfxv.blps.entity.CommentStatus;
-import dev.gfxv.blps.entity.User;
-import dev.gfxv.blps.entity.Video;
-import dev.gfxv.blps.model.XmlUser;
+import dev.gfxv.blps.entity.*;
+import dev.gfxv.blps.repository.AdminAssignmentRepository;
 import dev.gfxv.blps.repository.CommentRepository;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.security.JwtUtils;
@@ -14,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
@@ -27,9 +23,6 @@ public class CommentService {
     private UserRepository userRepository;
 
     @Autowired
-    private XmlUserService xmlUserService;
-
-    @Autowired
     private NotificationService notificationService;
 
     @Autowired
@@ -38,8 +31,10 @@ public class CommentService {
     @Autowired
     private JwtUtils jwtUtil;
 
-    public Comment addComment(String token, Comment comment, Long videoId) {
-        String username = jwtUtil.getUsernameFromJwtToken(token);
+    @Autowired
+    AdminAssignmentRepository adminAssignmentRepository;
+
+    public Comment addComment(String username, Comment comment, Long videoId) {
         Video video = videoService.getVideoById(videoId);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
@@ -70,23 +65,38 @@ public class CommentService {
     }
 
     public Comment approveComment(Long id, String username) {
-        List<String> roles = xmlUserService.getRolesByUsername(username);
-        if (roles.contains("ROLE_ADMIN")){
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
 
-        }
-        if (!roles.contains("ROLE_MODERATOR")){
-            System.out.println(roles.get(0));
+        Comment comment = commentRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found with username: " + username));
+
+        Video video = comment.getVideo();
+
+        if (!canManageVideo(user.getId(), video) && !user.getRoles().contains("ROLE_GLOBAL_MODERATOR")) {
             throw new SecurityException("У пользователя нет прав для выполнения этой операции");
         }
+
         return updateCommentStatus(id, CommentStatus.APPROVED);
     }
 
-    public void rejectComment(Long id, String token) {
-        List<String> roles = jwtUtil.getRolesFromJwtToken(token);
-        if (!roles.contains("ROLE_MODERATOR")){
+    public void rejectComment(Long id, String username) {
+        User user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+
+        Comment comment = commentRepository
+                .findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found with username: " + username));
+
+        Video video = comment.getVideo();
+
+        if (!canManageVideo(user.getId(), video) && !user.getRoles().contains("ROLE_GLOBAL_MODERATOR")) {
             throw new SecurityException("У пользователя нет прав для выполнения этой операции");
         }
-        //return updateCommentStatus(id, CommentStatus.REJECTED);
+
         commentRepository.deleteById(id);
     }
 
@@ -99,5 +109,23 @@ public class CommentService {
 
     private boolean containsStopWords(String text) {
         return STOP_WORDS.stream().anyMatch(text.toLowerCase()::contains);
+    }
+
+    private boolean canManageVideo(Long userId, Video video) {
+        if (userId == null) return false; // No authenticated user
+
+        // Owner can view their own video
+        if (video.getOwner().getId().equals(userId)) {
+            return true;
+        }
+
+        // Admins of the channel can view
+        List<AdminAssignment> assignments = adminAssignmentRepository.findByAdminId(userId);
+        for (AdminAssignment assignment : assignments) {
+            if (assignment.getChannel().getId().equals(video.getOwner().getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

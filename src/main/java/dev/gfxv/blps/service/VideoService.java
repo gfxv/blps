@@ -14,16 +14,7 @@ import dev.gfxv.blps.repository.VideoRepository;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
-<<<<<<< Updated upstream
 
-=======
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpRange;
->>>>>>> Stashed changes
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -126,9 +117,9 @@ public class VideoService {
 
 
     public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) {
-<<<<<<< Updated upstream
         return transactionTemplate.execute(status -> {
             String objName = null;
+            VideoResponse videoResponse = null;
             try {
                 String objectName = storageService.uploadVideo(
                         file.getOriginalFilename(),
@@ -136,6 +127,9 @@ public class VideoService {
                         file.getContentType()
                 );
                 objName = objectName;
+
+
+
                 Video video = new Video();
                 video.setTitle(request.getTitle());
                 video.setDescription(request.getDescription());
@@ -146,7 +140,7 @@ public class VideoService {
                 video.setMinioKey(objectName);
                 video.setVisibility(request.isVisibility());
                 videoRepository.save(video);
-                return new VideoResponse(video);
+                videoResponse = new VideoResponse(video);
             } catch (Exception e) {
                 status.setRollbackOnly();
                 if (objName != null) {
@@ -158,29 +152,13 @@ public class VideoService {
                 }
                 throw new RuntimeException("Failed to create video: " + e.getMessage());
             }
+            try {
+                Thread.sleep(1000 * 10); // 10s
+                return videoResponse;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         });
-=======
-        try {
-            String objectName = storageService.uploadVideo(
-                    file.getOriginalFilename(),
-                    file.getInputStream(),
-                    file.getContentType()
-            );
-            Video video = new Video();
-            video.setTitle(request.getTitle());
-            video.setDescription(request.getDescription());
-            video.setOwner(
-                    userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"))
-            );
-            video.setMinioKey(objectName);
-            video.setVisibility(request.isVisibility());
-            videoRepository.save(video);
-            return new VideoResponse(video);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create video: " + e.getMessage());
-        }
->>>>>>> Stashed changes
     }
 
     public VideoResponse updateVideo(Long videoId, UpdateVideoRequest updateDto, String username) {
