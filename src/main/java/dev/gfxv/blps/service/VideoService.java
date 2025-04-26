@@ -11,6 +11,7 @@ import dev.gfxv.blps.payload.response.VideoResponse;
 import dev.gfxv.blps.repository.AdminAssignmentRepository;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.repository.VideoRepository;
+import dev.gfxv.blps.service.tx.TwoPhaseCommitService;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,7 @@ public class VideoService {
     AdminAssignmentRepository adminAssignmentRepository;
     StorageService storageService;
     TransactionTemplate transactionTemplate;
-
-
-
+    TwoPhaseCommitService twoPhaseCommitService;
 
     @Autowired
     public VideoService(
@@ -42,13 +41,15 @@ public class VideoService {
             UserRepository userRepository,
             AdminAssignmentRepository adminAssignmentRepository,
             StorageService storageService,
-            TransactionTemplate transactionTemplate
+            TransactionTemplate transactionTemplate,
+            TwoPhaseCommitService twoPhaseCommitService
     ) {
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
         this.adminAssignmentRepository = adminAssignmentRepository;
         this.storageService = storageService;
         this.transactionTemplate = transactionTemplate;
+        this.twoPhaseCommitService = twoPhaseCommitService;
     }
 
     public VideoResponse getVideoById(Long id, String username) {
@@ -115,50 +116,9 @@ public class VideoService {
         return videoRepository.findVideoById(videoId);
     }
 
-
-    public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) {
-        return transactionTemplate.execute(status -> {
-            String objName = null;
-            VideoResponse videoResponse = null;
-            try {
-                String objectName = storageService.uploadVideo(
-                        file.getOriginalFilename(),
-                        file.getInputStream(),
-                        file.getContentType()
-                );
-                objName = objectName;
-
-
-
-                Video video = new Video();
-                video.setTitle(request.getTitle());
-                video.setDescription(request.getDescription());
-                video.setOwner(userRepository
-                        .findByUsername(username)
-                        .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"))
-                );
-                video.setMinioKey(objectName);
-                video.setVisibility(request.isVisibility());
-                videoRepository.save(video);
-                videoResponse = new VideoResponse(video);
-            } catch (Exception e) {
-                status.setRollbackOnly();
-                if (objName != null) {
-                    try {
-                        storageService.deleteVideo(objName);
-                    } catch (Exception deleteEx) {
-                        System.err.println("Compensating transaction failed for MinIO object " + objName + ": " + deleteEx.getMessage());
-                    }
-                }
-                throw new RuntimeException("Failed to create video: " + e.getMessage());
-            }
-            try {
-                Thread.sleep(1000 * 10); // 10s
-                return videoResponse;
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
+    public VideoResponse createVideo(MultipartFile file, CreateVideoRequest request, String username) throws Exception {
+        Video video = twoPhaseCommitService.saveFileAndMetadata(username, file, request);
+        return new VideoResponse(video);
     }
 
     public VideoResponse updateVideo(Long videoId, UpdateVideoRequest updateDto, String username) {
@@ -195,34 +155,8 @@ public class VideoService {
         });
     }
 
-    public void deleteVideo(Long videoId, String username) {
-        String minioKey = transactionTemplate.execute(status -> {
-            try {
-                Video video = videoRepository
-                        .findById(videoId)
-                        .orElseThrow(() -> new VideoNotFoundException("Video not found"));
-
-                User user = userRepository
-                        .findByUsername(username)
-                        .orElseThrow(() -> new UserNotFoundException("User " + username + " not found"));
-
-                if (!canManageVideo(user.getId(), video)) {
-                    throw new AccessDeniedException("You do not have permission to manage this video");
-                }
-
-                videoRepository.delete(video);
-                return video.getMinioKey();
-            } catch (Exception e) {
-                status.setRollbackOnly();
-                throw new RuntimeException("Failed to delete video with ID " + videoId + " from database: " + e.getMessage(), e);
-            }
-        });
-
-        try {
-            storageService.deleteVideo(minioKey);
-        } catch (Exception e) {
-            System.err.println("Failed to delete MinIO object for video ID " + videoId + ": " + e.getMessage());
-        }
+    public void deleteVideo(Long videoId, String username) throws Exception {
+        twoPhaseCommitService.deleteFileAndMetadata(videoId, username);
     }
 
 

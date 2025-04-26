@@ -1,6 +1,7 @@
 package dev.gfxv.blps.service;
 
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.errors.MinioException;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
@@ -35,21 +36,20 @@ public class StorageService {
         }
     }
 
-    public String uploadVideo(String fileName, InputStream inputStream, String contentType) throws Exception {
+    public void uploadVideo(String fileName, InputStream inputStream, String contentType) throws Exception {
+        System.out.println("saving to minio");
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
             }
-            String objectName = UUID.randomUUID() + "-" + fileName;
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(objectName)
+                            .object(fileName)
                             .stream(inputStream, inputStream.available(), -1)
                             .contentType(contentType)
                             .build()
             );
-            return objectName;
         } catch (Exception e) {
             throw new Exception("Failed to upload video to MinIO: " + e.getMessage(), e);
         }
@@ -79,5 +79,27 @@ public class StorageService {
         } catch (Exception e) {
             throw new Exception("Failed to delete video from MinIO: " + e.getMessage(), e);
         }
+    }
+
+    public boolean objectExists(String filename) {
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(filename)
+                    .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            System.out.println("Failed to check if object exists:" + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.out.println("AHTUNG AHTUNG during check if object exists:" + e.getMessage());
+            return false;
+        }
+    }
+
+    public static String generateFileKey(String fileName) {
+        return UUID.randomUUID() + "-" + fileName;
     }
 }

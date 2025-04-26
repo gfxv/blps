@@ -48,7 +48,7 @@ public class VideoController {
             @RequestPart MultipartFile file,
             @RequestPart CreateVideoRequest details,
             Authentication authentication
-    ) {
+    ) throws Exception {
         String username = getUsernameFromAuthentication(authentication);
         VideoResponse response = videoService.createVideo(file, details, username);
         return ResponseEntity.ok(response);
@@ -69,7 +69,7 @@ public class VideoController {
     public ResponseEntity<Void> deleteVideo(
             @PathVariable Long id,
             Authentication authentication
-    ) {
+    ) throws Exception {
         String username = getUsernameFromAuthentication(authentication);
         videoService.deleteVideo(id, username);
         return ResponseEntity.noContent().build();
