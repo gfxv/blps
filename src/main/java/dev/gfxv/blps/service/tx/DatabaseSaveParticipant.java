@@ -47,7 +47,7 @@ public class DatabaseSaveParticipant implements TwoPhaseCommitParticipant {
                     .orElseThrow(() -> new UserNotFoundException(username))
             );
 
-            videoRepository.save(video);
+            videoRepository.saveAndFlush(video);
             return true;
         } catch (Exception e) {
             if (txStatus != null) {
