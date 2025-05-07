@@ -1,14 +1,3 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <users>
-    <user password="admin" roles="ROLE_ADMIN,ROLE_MODERATOR" username="admin"/>
-    <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" roles="ROLE_USER" username="masha"/>
-    <user password="$2a$10$FjGvgyM9nl405TGM2aM7Lun0P.0skAJsCm0CL8xW/WNzAAfLcBP9m" roles="ROLE_USER" username="vasya"/>
-    <user password="$2a$10$b9uUnvKV1Ce9D/8JddB4duCS35DDkDH.nOgJvSsN.igH.CgcvV.Kq" roles="ROLE_USER" username="sonya"/>
-    <user password="$2a$10$kTHOluREpt1G6xvYIT2VoeS8SQZdJeAhzSarMXXNlnM9MfwDItM6e" roles="ROLE_USER" username="new-user"/>
-    <user password="$2a$10$D8PxjjTvjUYIzQUSYR3KNeA9T0Q2v1.BJO2a0YChLtly/li3M0DD." roles="ROLE_USER, ROLE_ADMIN" username="new-user-1"/>
-    <user password="$2a$10$6ogqzVRYKvGdnizWxBrJXOiAt1E/fDzhpV0771pd5opSdrIKeCdq." roles="ROLE_USER,ROLE_ADMIN" username="qwe"/>
-    <user password="$2a$10$n1fJBWixmKZ7gPIbM2HV8.cR/bOHGdNe2cWoR1Sw2SkTmYuQbRDiG" roles="ROLE_USER,ROLE_ADMIN" username="user"/>
-    <user password="$2a$10$54QY1ohHv88XU9f2y7LBD.nEOIeq5fpI9yYvl1qymYP2UAp0S4Ipm" roles="ROLE_USER" username="new-admin"/>
-    <user password="$2a$10$ogR59vS97uy8YVy8.6Jxq.ubUXqXw5zzxsxSb/icIXfMOlp1vKgX2" roles="ROLE_USER" username="simple-user"/>
-    <user password="$2a$10$iAI7tdoWxC/dnn9tjx.Hu.Sh0Tq6qU18Un82lXk.iXT6Ubnu5KTUO" roles="ROLE_USER" username="owner"/>
 </users>
