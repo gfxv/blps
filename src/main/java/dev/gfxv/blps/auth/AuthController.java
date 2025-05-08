@@ -53,8 +53,6 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        System.out.println("authentication: " + authentication);
-
         return jwtUtils.generateToken(request.getUsername(), authorities);
     }
 

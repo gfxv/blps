@@ -2,7 +2,6 @@ package dev.gfxv.blps.auth;
 
 import dev.gfxv.blps.model.XmlUser;
 import dev.gfxv.blps.model.XmlUsers;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -15,7 +14,6 @@ import java.security.Principal;
 import java.util.*;
 
 import javax.xml.bind.JAXBContext;
-import java.io.InputStream;
 
 import java.util.Map;
 
@@ -54,20 +52,14 @@ public class JaasLoginModule implements LoginModule {
             callbackHandler.handle(callbacks);
 
             String inputUsername = ((NameCallback) callbacks[0]).getName();
-            System.out.println(inputUsername);
             char[] inputPassword = ((PasswordCallback) callbacks[1]).getPassword();
-            System.out.println(inputPassword);
-
-            System.out.println(new BCryptPasswordEncoder().encode("54321"));
 
             JAXBContext context = JAXBContext.newInstance(XmlUsers.class);
-            //InputStream is = getClass().getClassLoader().getResourceAsStream("users.xml");
             File xmlFile = new File(usersXmlPath);
             if (!xmlFile.exists()) {
                 throw new LoginException("File not found: " + usersXmlPath);
             }
             XmlUsers xmlUsers = (XmlUsers) context.createUnmarshaller().unmarshal(xmlFile);
-            System.out.println("File: " + xmlFile.getAbsolutePath());System.out.println();
             XmlUser user = xmlUsers.getUsers().stream()
                     .filter(u -> u.getUsername().equals(inputUsername))
                     .findFirst()
@@ -84,15 +76,12 @@ public class JaasLoginModule implements LoginModule {
             if (user.getRoles() == null) {
                 throw new LoginException("User has no roles assigned");
             }
-            System.out.println(authenticatedUsername);
 
 
             String[] roles = user.getRoles().split(",");
             for (String role : roles) {
                 principalsToAdd.add(new RolePrincipal(role.trim()));
             }
-            System.out.println("Found users: " + xmlUsers.getUsers());
-            System.out.println("Requested user: " + inputUsername);
             return true;
 
 

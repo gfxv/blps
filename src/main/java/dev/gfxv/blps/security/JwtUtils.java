@@ -21,9 +21,6 @@ import static javax.crypto.Cipher.SECRET_KEY;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     @Value("${jwt.expiration}")
@@ -38,6 +35,7 @@ public class JwtUtils {
                 .signWith(SECRET_KEY)
                 .compact();
     }
+
     public String getUsernameFromJwtToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(SECRET_KEY)
