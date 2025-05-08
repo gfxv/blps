@@ -43,6 +43,7 @@ public class MonetizationService {
     @Autowired
     private NotificationService notificationService;
 
+
     @Autowired
     public MonetizationService(
             VideoRepository videoRepository,
@@ -138,7 +139,7 @@ public class MonetizationService {
         return publicVideosLast90Days.size() >= 3;
     }
 
-    @Scheduled(cron = "${app.monetization.check.cron:0 0 0 * * ?}") // По умолчанию каждый день в полночь
+    @Scheduled(fixedRate = 14 * 24 * 60 * 60 * 1000) // каждые 2 недели
     @Transactional
     public void checkMonetiizationEligibility() {
         List<User> users = userRepository.findAll();
