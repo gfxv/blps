@@ -48,8 +48,8 @@ public class UserController {
     public ResponseEntity<String> withdrawEarnings(
             @RequestParam Double amount,
             Authentication authentication) {
-        Long userId = Long.parseLong(authentication.getName());
-        monetizationService.withdrawEarnings(userId, amount);
+        String userName = authentication.getName();
+        monetizationService.withdrawEarningsWithStripe(userName, amount);
         return ResponseEntity.ok("Withdrawal processed successfully");
     }
 }

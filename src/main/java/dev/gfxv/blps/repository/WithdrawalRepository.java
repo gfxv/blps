@@ -7,4 +7,7 @@ import java.util.List;
 
 public interface WithdrawalRepository extends JpaRepository<Withdrawal, Long> {
     List<Withdrawal> findByUserIdOrderByWithdrawalDateDesc(Long userId);
+    List<Withdrawal> findByStatus(String status);
+
+    Withdrawal findByStripePayoutId(String id);
 }

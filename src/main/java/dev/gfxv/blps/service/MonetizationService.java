@@ -1,13 +1,18 @@
 package dev.gfxv.blps.service;
 
+import com.stripe.exception.StripeException;
+import com.stripe.model.Payout;
 import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.entity.Video;
 import dev.gfxv.blps.entity.Withdrawal;
 import dev.gfxv.blps.exception.UserNotFoundException;
+import dev.gfxv.blps.jca.StripeConnection;
+import dev.gfxv.blps.jca.StripeConnectionFactory;
 import dev.gfxv.blps.payload.response.MonetizationStatsResponse;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.repository.VideoRepository;
 import dev.gfxv.blps.repository.WithdrawalRepository;
+import jakarta.annotation.Resource;
 import jakarta.transaction.Transactional;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +47,10 @@ public class MonetizationService {
 
     @Autowired
     private NotificationService notificationService;
+
+
+    @Autowired
+    private StripeConnectionFactory stripeConnectionFactory;
 
 
     @Autowired
@@ -163,6 +172,60 @@ public class MonetizationService {
             } catch (Exception e) {
                 System.err.println("Error checking monetization for user " + user.getId() + ": " + e.getMessage());
             }
+        }
+    }
+
+    public void withdrawEarningsWithStripe(String userName, Double amount) {
+        transactionTemplate.execute(status -> {
+            try {
+                User user = userRepository.findByUsername(userName)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+                if (!user.isMonetized()) {
+                    throw new IllegalStateException("User is not monetized");
+                }
+
+                long amountCents = (long) (amount * 100);
+
+                try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
+                    String payoutId = conn.createPayout(
+                            "usd",
+                            amountCents,
+                            user.getStripeAccountId()
+                    );
+
+                    Withdrawal withdrawal = new Withdrawal();
+                    withdrawal.setUser(user);
+                    withdrawal.setAmount(amount);
+                    withdrawal.setStripePayoutId(payoutId);
+                    withdrawalRepository.save(withdrawal);
+                }
+
+                return null;
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Withdrawal failed: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    @Scheduled(cron = "0 0/30 * * * ?") // Каждые 30 минут
+    public void syncPayoutStatuses() {
+        List<Withdrawal> pendingWithdrawals = withdrawalRepository.findByStatus("pending");
+
+        try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
+            pendingWithdrawals.forEach(withdrawal -> {
+                Payout payout;
+                try {
+                    payout = Payout.retrieve(withdrawal.getStripePayoutId());
+                } catch (StripeException e) {
+                    throw new RuntimeException(e);
+                }
+                withdrawal.setStatus(payout.getStatus());
+                withdrawalRepository.save(withdrawal);
+            });
+        } catch (StripeException e) {
+            throw new RuntimeException(e);
         }
     }
 

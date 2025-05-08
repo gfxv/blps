@@ -22,4 +22,8 @@ public class Withdrawal {
 
     @Column(name = "withdrawal_date", nullable = false)
     private LocalDateTime withdrawalDate;
+
+    private String stripePayoutId;
+
+    private String status;
 }

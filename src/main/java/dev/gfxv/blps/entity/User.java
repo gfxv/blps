@@ -1,6 +1,5 @@
 package dev.gfxv.blps.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -39,9 +38,13 @@ public class User {
     private Long totalViews = 0L; // default to 0
 
     @Column(name = "is_monetized", nullable = false)
-    private boolean isMonetized = false;
+    private boolean monetized = false;
 
     @Column(name = "last_withdrawal_amount", nullable = false)
     private Double lastWithdrawalAmount = 0.0;
+
+    private String StripeAccountId;
+
+
 
 }
