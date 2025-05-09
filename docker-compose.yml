@@ -12,6 +12,55 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: blps-activemq
+    ports:
+      - "61616:61616" # jms
+      - "8161:8161" # web ui
+#      - "1883:1883" # mqtt
+#      - "5672:5672" # amqp
+#      - "61613:61613" # stomp
+#      - "61614:61614" # ws
+    environment:
+      - ACTIVEMQ_ADMIN_LOGIN=admin
+      - ACTIVEMQ_ADMIN_PASSWORD=admin
+    volumes:
+      - activemq_data:/opt/activemq/data
+    networks:
+      - activemq-network
+
+#  activemq-old:
+#    image: webcenter/activemq:5.14.3
+#    container_name: blps-activemq
+#    ports:
+#      - "1883:1883" # mqtt
+#      - "5672:5672" # amqp
+#      - "8161:8161" # ui
+#      - "61613:61613" # stomp
+#      - "61614:61614" # ws
+#      - "61616:61616" # jms
+#    volumes:
+#      - activemq_data:/opt/activemq/conf
+#      - activemq_data:/data/activemq
+#      - activemq_data:/var/log/activemq
+#    environment:
+#      ACTIVEMQ_REMOVE_DEFAULT_ACCOUNT: "true"
+#      ACTIVEMQ_ADMIN_LOGIN: admin
+#      ACTIVEMQ_ADMIN_PASSWORD: password
+#      ACTIVEMQ_WRITE_LOGIN: write
+#      ACTIVEMQ_WRITE_PASSWORD: password
+#      ACTIVEMQ_READ_LOGIN: read
+#      ACTIVEMQ_READ_PASSWORD: password
+#      ACTIVEMQ_JMX_LOGIN: jmx
+#      ACTIVEMQ_JMX_PASSWORD: password
+#      ACTIVEMQ_STATIC_TOPICS: static-topic-1;static-topic-2
+#      ACTIVEMQ_STATIC_QUEUES: static-queue-1;static-queue-2
+#      ACTIVEMQ_ENABLED_SCHEDULER: "true"
+#      ACTIVEMQ_MIN_MEMORY: 512
+#      ACTIVEMQ_MAX_MEMORY: 2048
+
   minio:
     image: minio/minio:latest
     container_name: blps-minio
@@ -28,4 +77,9 @@ services:
 
 volumes:
   postgres_data:
+  activemq_data:
   minio_data:
+
+networks:
+  activemq-network:
+    driver: bridge
