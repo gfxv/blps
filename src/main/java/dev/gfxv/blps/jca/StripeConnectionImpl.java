@@ -3,6 +3,7 @@ package dev.gfxv.blps.jca;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Payout;
+import com.stripe.net.RequestOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +19,15 @@ public class StripeConnectionImpl implements StripeConnection {
         Map<String, Object> params = new HashMap<>();
         params.put("amount", amount);
         params.put("currency", currency);
-        params.put("destination", destination);
 
-        Payout payout = Payout.create(params);
+        RequestOptions requestOptions = RequestOptions.builder()
+                .setStripeAccount(destination)
+                .build();
+
+        Payout payout = Payout.create(params, requestOptions);
         return payout.getId();
     }
+
 
     @Override
     public void close() {

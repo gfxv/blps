@@ -2,6 +2,7 @@ package dev.gfxv.blps.service;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Payout;
+import com.stripe.net.RequestOptions;
 import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.entity.Video;
 import dev.gfxv.blps.entity.Withdrawal;
@@ -80,7 +81,6 @@ public class MonetizationService {
             }
         });
     }
-
 
 
     public MonetizationStatsResponse getMonetizationStats(String username) {
@@ -210,23 +210,25 @@ public class MonetizationService {
     }
 
     @Scheduled(cron = "0 0/30 * * * ?") // Каждые 30 минут
-    public void syncPayoutStatuses() {
+    public void syncPayoutStatuses() throws StripeException {
         List<Withdrawal> pendingWithdrawals = withdrawalRepository.findByStatus("pending");
 
         try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
             pendingWithdrawals.forEach(withdrawal -> {
-                Payout payout;
                 try {
-                    payout = Payout.retrieve(withdrawal.getStripePayoutId());
-                } catch (StripeException e) {
-                    throw new RuntimeException(e);
-                }
-                withdrawal.setStatus(payout.getStatus());
-                withdrawalRepository.save(withdrawal);
-            });
-        } catch (StripeException e) {
-            throw new RuntimeException(e);
-        }
-    }
+                    RequestOptions requestOptions = RequestOptions.builder()
+                            .setStripeAccount(withdrawal.getUser().getStripeAccountId())
+                            .build();
 
+                    Payout payout = Payout.retrieve(withdrawal.getStripePayoutId(), requestOptions);
+                    withdrawal.setStatus(payout.getStatus());
+                    withdrawalRepository.save(withdrawal);
+
+                } catch (StripeException e) {
+                    throw new RuntimeException("Failed to sync payout: " + e.getMessage(), e);
+                }
+
+            })
+        ;}
+    }
 }

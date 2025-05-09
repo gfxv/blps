@@ -2,5 +2,6 @@
 <users>
     <user password="$2a$10$bUuxtOqrDCZFF2Tleoy9H.GwET3NroUVp5M3b4WZBOOy6AvYkkq7O" roles="ROLE_USER" username="maria"/>
     <user password="$2a$10$ev8PJI0RBsUMKyuhPo94VuMvMGriZy/hKU1jYXnSMWTtlaEYG/5.y" roles="ROLE_USER" username="test"/>
-   <user password="$2a$10$rEkubBr/Dxo0BVQvEHvmBu2KuLPzluvK2GNEJ7uv9A.Ozorh85M6y" roles="ROLE_USER, ROLE_ADMIN" username=" blps"/>
+    <user password="$2a$10$rEkubBr/Dxo0BVQvEHvmBu2KuLPzluvK2GNEJ7uv9A.Ozorh85M6y" roles="ROLE_USER, ROLE_ADMIN" username=" blps"/>
+    <user password="$2a$10$3crZu3NMCdi5R6nbqmVpiero/UynLOHsu8LYdkFOBd3itoOJQuKpG" roles="ROLE_USER, ROLE_ADMIN" username="user1"/>
 </users>
