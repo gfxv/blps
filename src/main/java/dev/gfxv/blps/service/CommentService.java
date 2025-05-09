@@ -1,12 +1,13 @@
 package dev.gfxv.blps.service;
 
 import dev.gfxv.blps.entity.*;
+import dev.gfxv.blps.payload.request.CommentRequest;
 import dev.gfxv.blps.repository.AdminAssignmentRepository;
 import dev.gfxv.blps.repository.CommentRepository;
 import dev.gfxv.blps.repository.UserRepository;
-import dev.gfxv.blps.security.JwtUtils;
+import dev.gfxv.blps.service.jms.CommentSender;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -14,26 +15,17 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@AllArgsConstructor
 public class CommentService {
     private static final Set<String> STOP_WORDS = Set.of("spam", "offensive", "banned");
 
-    @Autowired
+    private CommentSender commentSender;
+
     private CommentRepository commentRepository;
-
-    @Autowired
     private UserRepository userRepository;
-
-    @Autowired
     private NotificationService notificationService;
-
-    @Autowired
     private VideoService videoService;
-
-    @Autowired
-    private JwtUtils jwtUtil;
-
-    @Autowired
-    AdminAssignmentRepository adminAssignmentRepository;
+    private AdminAssignmentRepository adminAssignmentRepository;
 
     public Comment addComment(String username, Comment comment, Long videoId) {
         Video video = videoService.getVideoById(videoId);
@@ -49,33 +41,21 @@ public class CommentService {
         return comment;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60 * 1000) // 1 minute
     public void autoModerateComments() {
+        // TODO: add pagination
         List<Comment> pendingComments = commentRepository.findByStatus(CommentStatus.PENDING);
         for (Comment comment : pendingComments) {
-            try {
-                if (containsStopWords(comment.getText())) {
-                    User user = userRepository.findById(comment.getUserId())
-                            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + comment.getUserId()));
-                    commentRepository.delete(comment);
-                    notificationService.notifyUser(user.getId(), "Ваш комментарий был удален из-за нарушения правил.");
-                } else {
-                    comment.setStatus(CommentStatus.APPROVED);
-                    commentRepository.save(comment);
-                    notificationService.notifyUser(comment.getUserId(), "Ваш комментарий был одобрен.");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            var dto = CommentRequest.from(comment);
+            commentSender.sendComment(dto);
         }
     }
-
 
     public List<Comment> getPendingComments() {
         return commentRepository.findByStatus(CommentStatus.PENDING);
     }
 
-    public List<Comment> getVideoComments(Long videoId){
+    public List<Comment> getVideoComments(Long videoId) {
         Video video = videoService.getVideoById(videoId);
         return commentRepository.findByVideo(video);
     }
