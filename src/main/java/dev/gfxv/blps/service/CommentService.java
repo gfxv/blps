@@ -7,6 +7,7 @@ import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.security.JwtUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -44,14 +45,29 @@ public class CommentService {
         comment.setStatus(CommentStatus.PENDING);
         comment = commentRepository.save(comment);
 
-        if (containsStopWords(comment.getText())) {
-            commentRepository.delete(comment);
-            notificationService.notifyUser(user.getId(), "Ваш комментарий был удален из-за нарушения правил.");
-            throw new IllegalArgumentException("Комментарий содержит запрещенные слова и был удален.");
-        }
-
-        notificationService.notifyUser(user.getId(), "Ваш комментарий успешно сохранен.");
+        notificationService.notifyUser(user.getId(), "Ваш комментарий успешно сохранен и ожидает модерации.");
         return comment;
+    }
+
+    @Scheduled(fixedRate = 60000)
+    public void autoModerateComments() {
+        List<Comment> pendingComments = commentRepository.findByStatus(CommentStatus.PENDING);
+        for (Comment comment : pendingComments) {
+            try {
+                if (containsStopWords(comment.getText())) {
+                    User user = userRepository.findById(comment.getUserId())
+                            .orElseThrow(() -> new EntityNotFoundException("User not found with id: " + comment.getUserId()));
+                    commentRepository.delete(comment);
+                    notificationService.notifyUser(user.getId(), "Ваш комментарий был удален из-за нарушения правил.");
+                } else {
+                    comment.setStatus(CommentStatus.APPROVED);
+                    commentRepository.save(comment);
+                    notificationService.notifyUser(comment.getUserId(), "Ваш комментарий был одобрен.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -112,14 +128,10 @@ public class CommentService {
     }
 
     private boolean canManageVideo(Long userId, Video video) {
-        if (userId == null) return false; // No authenticated user
-
-        // Owner can view their own video
+        if (userId == null) return false;
         if (video.getOwner().getId().equals(userId)) {
             return true;
         }
-
-        // Admins of the channel can view
         List<AdminAssignment> assignments = adminAssignmentRepository.findByAdminId(userId);
         for (AdminAssignment assignment : assignments) {
             if (assignment.getChannel().getId().equals(video.getOwner().getId())) {

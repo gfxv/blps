@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -40,6 +41,10 @@ public class MonetizationService {
     TransactionTemplate transactionTemplate;
 
     @Autowired
+    private NotificationService notificationService;
+
+
+    @Autowired
     public MonetizationService(
             VideoRepository videoRepository,
             UserRepository userRepository,
@@ -59,20 +64,15 @@ public class MonetizationService {
                         .findByUsername(username)
                         .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-                if (!isEligibleForMonetization(user.getId())) {
-                    return false;
-                }
-
-                user.setMonetized(true);
-                userRepository.save(user);
-
-                return true;
+                return user.isMonetized();
             } catch (Exception e) {
                 status.setRollbackOnly();
                 throw new RuntimeException("Failed to request monetization for user " + username + ": " + e.getMessage(), e);
             }
         });
     }
+
+
 
     public MonetizationStatsResponse getMonetizationStats(String username) {
         User user = userRepository
@@ -129,17 +129,41 @@ public class MonetizationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // see: https://www.youtube.com/intl/en_us/creators/how-things-work/video-monetization/
-
-        // check if the user has at least 500 subscribers
         if (user.getSubscribers() < minSubs) {
             return false;
         }
 
-        // check if the user has at least 3 public uploads in the last 90 days
         LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(testPeriod);
         List<Video> publicVideosLast90Days = videoRepository
                 .findByOwnerIdAndVisibilityTrueAndCreatedAtAfter(userId, ninetyDaysAgo);
         return publicVideosLast90Days.size() >= 3;
     }
+
+    @Scheduled(fixedRate = 14 * 24 * 60 * 60 * 1000) // каждые 2 недели
+    @Transactional
+    public void checkMonetiizationEligibility() {
+        List<User> users = userRepository.findAll();
+        for (User user : users) {
+            try {
+                if (!isEligibleForMonetization(user.getId())) {
+                    user.setMonetized(false);
+                    userRepository.save(user);
+                    notificationService.notifyUser(
+                            user.getId(),
+                            "Монетизация отключена: вы больше не соответствуете требованиям"
+                    );
+                } else {
+                    user.setMonetized(true);
+                    userRepository.save(user);
+                    notificationService.notifyUser(
+                            user.getId(),
+                            "Монетизация подключена: вы соответствуете требованиям"
+                    );
+                }
+            } catch (Exception e) {
+                System.err.println("Error checking monetization for user " + user.getId() + ": " + e.getMessage());
+            }
+        }
+    }
+
 }
