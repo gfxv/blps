@@ -102,7 +102,7 @@ public class MonetizationService {
         return new MonetizationStatsResponse(totalEarnings, earningsSinceLastWithdrawal);
     }
 
-    public void withdrawEarnings(Long userId, Double amount) {
+    public void withdrawEarnings(Long userId, Long amount) {
         transactionTemplate.execute(status -> {
             try {
                 User user = userRepository.findById(userId)
@@ -175,7 +175,7 @@ public class MonetizationService {
         }
     }
 
-    public void withdrawEarningsWithStripe(String userName, Double amount) {
+    public void withdrawEarningsWithStripe(String userName, Long amount) {
         transactionTemplate.execute(status -> {
             try {
                 User user = userRepository.findByUsername(userName)
@@ -185,9 +185,14 @@ public class MonetizationService {
                     throw new IllegalStateException("User is not monetized");
                 }
 
-                long amountCents = (long) (amount * 100);
+                long amountCents = amount * 100;
+
 
                 try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
+                    String paymentId = conn.createPayment(user.getStripeAccountId());
+                    //conn.addTestExternalAccount(user.getStripeAccountId());
+                    //conn.addTestFunds(user.getStripeAccountId());
+                    System.out.println("amount = " + amountCents);
                     String payoutId = conn.createPayout(
                             "usd",
                             amountCents,
@@ -209,7 +214,7 @@ public class MonetizationService {
         });
     }
 
-    @Scheduled(cron = "0 0/30 * * * ?") // Каждые 30 минут
+    @Scheduled(cron = "0 0/30 * * * ?") // Каждые 30 минХут
     public void syncPayoutStatuses() throws StripeException {
         List<Withdrawal> pendingWithdrawals = withdrawalRepository.findByStatus("pending");
 
@@ -229,6 +234,7 @@ public class MonetizationService {
                 }
 
             })
-        ;}
+            ;
+        }
     }
 }

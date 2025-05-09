@@ -46,7 +46,7 @@ public class UserController {
 
     @PostMapping("/me/withdraw")
     public ResponseEntity<String> withdrawEarnings(
-            @RequestParam Double amount,
+            @RequestParam Long amount,
             Authentication authentication) {
         String userName = authentication.getName();
         monetizationService.withdrawEarningsWithStripe(userName, amount);

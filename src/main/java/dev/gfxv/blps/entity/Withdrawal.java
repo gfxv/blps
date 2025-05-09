@@ -18,7 +18,7 @@ public class Withdrawal {
     private User user;
 
     @Column(name = "amount", nullable = false)
-    private Double amount;
+    private Long amount;
 
     @Column(name = "withdrawal_date", nullable = false)
     private LocalDateTime withdrawalDate;
