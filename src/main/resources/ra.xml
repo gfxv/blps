@@ -1,0 +1,24 @@
+<connector xmlns="https://jakarta.ee/xml/ns/jakartaee" version="10">
+    <display-name>Stripe Adapter</display-name>
+    <vendor-name>VideoPlatform</vendor-name>
+    <eis-type>Stripe</eis-type>
+    <resourceadapter>
+        <outbound-resourceadapter>
+            <connection-definition>
+                <managedconnectionfactory-class>
+                    com.videoplatform.stripe.adapter.StripeManagedConnectionFactory
+                </managedconnectionfactory-class>
+                <connectionfactory-interface>
+                    com.videoplatform.stripe.adapter.StripeConnectionFactory
+                </connectionfactory-interface>
+            </connection-definition>
+            <config-property>
+                <name>apiKey</name>
+                <value>ENC(AbCdEfG123cbksbcijksdnc1221bxbecbsbc)</value>
+            </config-property>
+            <connection-pool>
+                <max-pool-size>10</max-pool-size>
+            </connection-pool>
+        </outbound-resourceadapter>
+    </resourceadapter>
+</connector>

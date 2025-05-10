@@ -1,13 +1,9 @@
 target
 .idea
-<<<<<<< Updated upstream
-
 .env
 .gitattributes
 todo.txt
 .mvn
 .DS_Store
-=======
 .env
 .gitattributes
->>>>>>> Stashed changes

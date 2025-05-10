@@ -1,14 +1,20 @@
 package dev.gfxv.blps.service;
 
+import com.stripe.exception.StripeException;
+import com.stripe.model.Payout;
+import com.stripe.net.RequestOptions;
 import dev.gfxv.blps.entity.User;
 import dev.gfxv.blps.entity.Video;
 import dev.gfxv.blps.entity.Withdrawal;
 import dev.gfxv.blps.exception.UserNotFoundException;
+import dev.gfxv.blps.jca.StripeConnection;
+import dev.gfxv.blps.jca.StripeConnectionFactory;
 import dev.gfxv.blps.payload.request.WithdrawRequest;
 import dev.gfxv.blps.payload.response.MonetizationStatsResponse;
 import dev.gfxv.blps.repository.UserRepository;
 import dev.gfxv.blps.repository.VideoRepository;
 import dev.gfxv.blps.repository.WithdrawalRepository;
+import jakarta.annotation.Resource;
 import dev.gfxv.blps.service.jms.WithdrawRequestSender;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -48,13 +54,15 @@ public class MonetizationService {
 
 
     @Autowired
+    private StripeConnectionFactory stripeConnectionFactory;
+
+
+    @Autowired
     public MonetizationService(
             VideoRepository videoRepository,
             UserRepository userRepository,
             WithdrawalRepository withdrawalRepository,
-            TransactionTemplate transactionTemplate,
-            NotificationService notificationService,
-            WithdrawRequestSender withdrawRequestSender
+            TransactionTemplate transactionTemplate
     ) {
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
@@ -100,11 +108,36 @@ public class MonetizationService {
         return new MonetizationStatsResponse(totalEarnings, earningsSinceLastWithdrawal);
     }
 
-    public void withdrawEarnings(Long userId, Double amount) {
-        WithdrawRequest withdrawRequest = new WithdrawRequest();
-        withdrawRequest.setUserId(userId);
-        withdrawRequest.setAmount(amount);
-        withdrawRequestSender.sendRequest(withdrawRequest);
+    public void withdrawEarnings(Long userId, Long amount) {
+        transactionTemplate.execute(status -> {
+            try {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+                if (!user.isMonetized()) {
+                    throw new IllegalStateException("User is not monetized");
+                }
+
+                double totalEarnings = user.getTotalViews() * monetizationRatio;
+                if (amount > totalEarnings - user.getLastWithdrawalAmount()) {
+                    throw new IllegalArgumentException("Insufficient earnings for withdrawal");
+                }
+
+                Withdrawal withdrawal = new Withdrawal();
+                withdrawal.setUser(user);
+                withdrawal.setAmount(amount);
+                withdrawal.setWithdrawalDate(LocalDateTime.now());
+                withdrawalRepository.save(withdrawal);
+
+                user.setLastWithdrawalAmount(user.getLastWithdrawalAmount() + amount);
+                userRepository.save(user);
+
+                return null;
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Failed to process withdrawal for user ID " + userId + ": " + e.getMessage(), e);
+            }
+        });
     }
 
     public boolean isEligibleForMonetization(Long userId) {
@@ -148,4 +181,65 @@ public class MonetizationService {
         }
     }
 
+    public void withdrawEarningsWithStripe(String userName, Long amount) {
+        transactionTemplate.execute(status -> {
+            try {
+                User user = userRepository.findByUsername(userName)
+                        .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+                if (!user.isMonetized()) {
+                    throw new IllegalStateException("User is not monetized");
+                }
+
+                long amountCents = amount * 100;
+
+
+                try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
+                    String paymentId = conn.createPayment(user.getStripeAccountId());
+                    //conn.addTestExternalAccount(user.getStripeAccountId());
+                    //conn.addTestFunds(user.getStripeAccountId());
+                    System.out.println("amount = " + amountCents);
+                    String payoutId = conn.createPayout(
+                            "usd",
+                            amountCents,
+                            user.getStripeAccountId()
+                    );
+
+                    Withdrawal withdrawal = new Withdrawal();
+                    withdrawal.setUser(user);
+                    withdrawal.setAmount(amount);
+                    withdrawal.setStripePayoutId(payoutId);
+                    withdrawalRepository.save(withdrawal);
+                }
+
+                return null;
+            } catch (Exception e) {
+                status.setRollbackOnly();
+                throw new RuntimeException("Withdrawal failed: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    @Scheduled(cron = "0 0/30 * * * ?") // Каждые 30 минХут
+    public void syncPayoutStatuses() throws StripeException {
+        List<Withdrawal> pendingWithdrawals = withdrawalRepository.findByStatus("pending");
+
+        try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
+            pendingWithdrawals.forEach(withdrawal -> {
+                try {
+                    RequestOptions requestOptions = RequestOptions.builder()
+                            .setStripeAccount(withdrawal.getUser().getStripeAccountId())
+                            .build();
+
+                    Payout payout = Payout.retrieve(withdrawal.getStripePayoutId(), requestOptions);
+                    withdrawal.setStatus(payout.getStatus());
+                    withdrawalRepository.save(withdrawal);
+
+                } catch (StripeException e) {
+                    throw new RuntimeException("Failed to sync payout: " + e.getMessage(), e);
+                }
+
+            });
+        }
+    }
 }
