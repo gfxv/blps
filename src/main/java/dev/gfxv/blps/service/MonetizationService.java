@@ -233,8 +233,7 @@ public class MonetizationService {
                     throw new RuntimeException("Failed to sync payout: " + e.getMessage(), e);
                 }
 
-            })
-            ;
+            });
         }
     }
 }
