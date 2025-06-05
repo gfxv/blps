@@ -62,7 +62,9 @@ public class MonetizationService {
             VideoRepository videoRepository,
             UserRepository userRepository,
             WithdrawalRepository withdrawalRepository,
-            TransactionTemplate transactionTemplate
+            TransactionTemplate transactionTemplate,
+            NotificationService notificationService,
+            WithdrawRequestSender withdrawRequestSender
     ) {
         this.videoRepository = videoRepository;
         this.userRepository = userRepository;
@@ -86,7 +88,6 @@ public class MonetizationService {
             }
         });
     }
-
 
 
     public MonetizationStatsResponse getMonetizationStats(String username) {
@@ -192,15 +193,13 @@ public class MonetizationService {
                 }
 
                 long amountCents = amount * 100;
-
-
                 try (StripeConnection conn = stripeConnectionFactory.getConnection()) {
-                    String paymentId = conn.createPayment(user.getStripeAccountId());
-                    //conn.addTestExternalAccount(user.getStripeAccountId());
-                    //conn.addTestFunds(user.getStripeAccountId());
+                    // String paymentId = conn.createPayment(user.getStripeAccountId());
+                    // conn.addTestExternalAccount(user.getStripeAccountId());
+                    // conn.addTestFunds(user.getStripeAccountId());
                     System.out.println("amount = " + amountCents);
                     String payoutId = conn.createPayout(
-                            "usd",
+                            "eur",
                             amountCents,
                             user.getStripeAccountId()
                     );

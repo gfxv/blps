@@ -16,8 +16,8 @@ public class VideoResponse {
     private String description;
     private Long ownerId;
     private boolean visibility;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+//    private LocalDateTime createdAt;
+//    private LocalDateTime updatedAt;
     private Long views;
     private String streamUrl;
 
@@ -27,8 +27,8 @@ public class VideoResponse {
         this.description = video.getDescription();
         this.ownerId = video.getOwner().getId();
         this.visibility = video.isVisibility();
-        this.createdAt = video.getCreatedAt();
-        this.updatedAt = video.getUpdatedAt();
+//        this.createdAt = video.getCreatedAt();
+//        this.updatedAt = video.getUpdatedAt();
         this.views = video.getViewCount();
     }
 }

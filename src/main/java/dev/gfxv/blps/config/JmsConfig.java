@@ -74,11 +74,6 @@ public class JmsConfig {
         return factory;
     }
 
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
-    }
-
     private CachingConnectionFactory newCachingConnectionFactory(ActiveMQConnectionFactory connectionFactory) {
         CachingConnectionFactory cachingFactory = new CachingConnectionFactory(connectionFactory);
         cachingFactory.setSessionCacheSize(10); // Cache up to 10 sessions

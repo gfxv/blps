@@ -5,6 +5,7 @@ import dev.gfxv.blps.entity.CommentStatus;
 import dev.gfxv.blps.entity.Video;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 public class CommentRequest {
 
-    @NotBlank
+    @NotNull
     private Long id;
 
     @NotBlank(message = "Text can't be empty")
@@ -21,9 +22,6 @@ public class CommentRequest {
 
     @NotBlank
     private Long userId;
-
-    @NotBlank
-    private Video video;
 
     @NotBlank
     private CommentStatus status;
@@ -36,7 +34,6 @@ public class CommentRequest {
         dto.setId(comment.getId());
         dto.setText(comment.getText());
         dto.setUserId(comment.getUserId());
-        dto.setVideo(comment.getVideo());
         dto.setStatus(comment.getStatus());
         dto.setCreatedAt(comment.getCreatedAt());
         return dto;

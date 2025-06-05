@@ -65,13 +65,6 @@ public class TwoPhaseCommitService {
     }
 
     private void runTransaction(List<TwoPhaseCommitParticipant> participants) {
-
-//        try {
-//            Thread.sleep(10 * 1000);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-
         boolean allPrepared = true;
         for (TwoPhaseCommitParticipant participant : participants) {
             if (!participant.prepare()) {
